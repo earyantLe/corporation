@@ -174,6 +174,18 @@ def init_db():
         )
     """)
 
+    # 政策表（公司政策）
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS policies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            category TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     conn.commit()
 
     # 初始化示例数据（如果是新数据库）
@@ -275,6 +287,15 @@ class APIHandler(SimpleHTTPRequestHandler):
         elif path == "/api/news":
             category = query.get("category", [None])[0]
             self.send_json(self.get_news(category))
+        elif path == "/api/policies":
+            category = query.get("category", [None])[0]
+            self.send_json(self.get_policies(category))
+        elif path.startswith("/api/policies/"):
+            policy_id = path.split("/")[-1]
+            if policy_id.isdigit():
+                self.send_json(self.get_policy(int(policy_id)))
+            else:
+                self.send_error(404)
         # 任务干预 API
         elif path == "/api/tasks/intervene":
             self.send_json({"success": True, "actions": ["pause", "resume", "reassign", "prioritize"]})
@@ -361,6 +382,12 @@ class APIHandler(SimpleHTTPRequestHandler):
             data = json.loads(body)
             news = self.create_news(data)
             self.send_json({"success": True, "news": news})
+        elif self.path == "/api/policies":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            policy = self.create_policy(data)
+            self.send_json({"success": True, "policy": policy})
         else:
             self.send_error(404)
 
@@ -385,6 +412,10 @@ class APIHandler(SimpleHTTPRequestHandler):
         elif self.path.startswith("/api/news/"):
             news_id = int(self.path.split("/")[-1])
             self.delete_news(news_id)
+            self.send_json({"success": True})
+        elif self.path.startswith("/api/policies/"):
+            policy_id = int(self.path.split("/")[-1])
+            self.delete_policy(policy_id)
             self.send_json({"success": True})
         else:
             self.send_error(404)
@@ -972,6 +1003,66 @@ class APIHandler(SimpleHTTPRequestHandler):
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute("DELETE FROM news WHERE id = ?", (news_id,))
+        conn.commit()
+        conn.close()
+
+    # 政策管理
+    def get_policies(self, category=None):
+        """获取政策列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        if category:
+            cursor.execute("SELECT * FROM policies WHERE category = ? ORDER BY created_at DESC", (category,))
+        else:
+            cursor.execute("SELECT * FROM policies ORDER BY created_at DESC")
+        policies = []
+        for row in cursor.fetchall():
+            policies.append({
+                "id": row["id"],
+                "title": row["title"],
+                "category": row["category"],
+                "content": row["content"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"]
+            })
+        conn.close()
+        return {"policies": policies}
+
+    def get_policy(self, policy_id):
+        """获取单个政策"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM policies WHERE id = ?", (policy_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return {
+                "id": row["id"],
+                "title": row["title"],
+                "category": row["category"],
+                "content": row["content"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"]
+            }
+        return None
+
+    def create_policy(self, data):
+        """创建政策"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO policies (title, category, content) VALUES (?, ?, ?)",
+            (data.get("title"), data.get("category"), data.get("content"))
+        )
+        conn.commit()
+        conn.close()
+        return {"id": cursor.lastrowid, **data}
+
+    def delete_policy(self, policy_id):
+        """删除政策"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM policies WHERE id = ?", (policy_id,))
         conn.commit()
         conn.close()
 
