@@ -17,7 +17,7 @@
 </head>
 <body class="bg-gray-50 min-h-screen">
     <!-- 顶部导航 -->
-    <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
+    <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg h-20">
         <div class="max-w-7xl mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
@@ -36,9 +36,6 @@
                     <a href="policies.html" class="text-sm hover:text-white transition">📋 公司政策</a>
                     <a href="skills.html" class="text-sm hover:text-white transition">🛠️ 技能管理</a>
                     <a href="models.html" class="text-sm hover:text-white transition">🤖 模型配置</a>
-                    <button onclick="openModal()" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-blue-50 transition">
-                        ➕ 新建任务
-                    </button>
                 </div>
             </div>
         </div>
@@ -46,6 +43,17 @@
 
     <!-- 主内容 -->
     <main class="max-w-7xl mx-auto px-4 py-6">
+        <!-- 状态栏 -->
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-2 text-sm text-gray-600">
+                <span>📋</span>
+                <span>任务管理中心 - 实时数据</span>
+            </div>
+            <button onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                ➕ 新建任务
+            </button>
+        </div>
+
         <!-- 统计卡片 -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-xl shadow-md p-5">
