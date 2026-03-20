@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公司政策 - 公司智能体</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .policy-card:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .policy-card { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">📜</span>
+                    <div>
+                        <h1 class="text-lg font-bold">公司政策中心</h1>
+                        <p class="text-sm text-blue-200">Corporate Policies</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-sm hover:text-white transition">📊 监控看板</a>
+                    <a href="tasks.html" class="text-sm hover:text-white transition">📋 任务管理</a>
+                    <a href="skills.html" class="text-sm hover:text-white transition">🛠️ 技能管理</a>
+                    <a href="models.html" class="text-sm hover:text-white transition">🤖 模型配置</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <!-- 政策分类 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow-md p-5 policy-card cursor-pointer" onclick="filterCategory('all')">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">全部政策</p>
+                        <p class="text-2xl font-bold text-blue-600" id="totalCount">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">📚</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5 policy-card cursor-pointer" onclick="filterCategory('operational')">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">运营规范</p>
+                        <p class="text-2xl font-bold text-green-600" id="operationalCount">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">⚙️</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5 policy-card cursor-pointer" onclick="filterCategory('financial')">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">财务制度</p>
+                        <p class="text-2xl font-bold text-purple-600" id="financialCount">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">💰</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5 policy-card cursor-pointer" onclick="filterCategory('technical')">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">技术规范</p>
+                        <p class="text-2xl font-bold text-orange-600" id="technicalCount">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">🔧</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 政策列表 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-4 border-b flex items-center justify-between">
+                <h2 class="text-lg font-bold text-gray-800">政策列表</h2>
+                <button onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">➕ 新增政策</button>
+            </div>
+            <div id="policyList" class="divide-y divide-gray-100"></div>
+        </div>
+    </main>
+
+    <!-- 新增政策模态框 -->
+    <div id="policyModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">➕ 新增政策</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            </div>
+            <form onsubmit="createPolicy(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">政策标题</label>
+                    <input type="text" id="policyTitle" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="请输入政策标题">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">政策分类</label>
+                    <select id="policyCategory" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="operational">运营规范</option>
+                        <option value="financial">财务制度</option>
+                        <option value="technical">技术规范</option>
+                        <option value="hr">人力资源</option>
+                        <option value="compliance">合规风控</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">政策内容</label>
+                    <textarea id="policyContent" rows="8" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="请输入政策详细内容..."></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存政策</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let policies = [];
+        let currentCategory = 'all';
+
+        const categoryNames = {
+            'operational': '运营规范',
+            'financial': '财务制度',
+            'technical': '技术规范',
+            'hr': '人力资源',
+            'compliance': '合规风控'
+        };
+
+        const categoryColors = {
+            'operational': 'green',
+            'financial': 'purple',
+            'technical': 'orange',
+            'hr': 'pink',
+            'compliance': 'blue'
+        };
+
+        // 默认政策数据
+        const defaultPolicies = [
+            { id: 1, title: 'Agent 协作规范', category: 'operational', content: '1. 所有任务必须经过 CEO 分配\n2. 跨部门协作需通过 COO 协调\n3. 重要决策需经过相关部门会签', createdAt: new Date().toISOString() },
+            { id: 2, title: '财务报销制度', category: 'financial', content: '1. 单笔支出超过 1000 元需 CFO 审批\n2. 月度预算由财务部统一管理\n3. 所有支出需有合法票据', createdAt: new Date().toISOString() },
+            { id: 3, title: '代码审查规范', category: 'technical', content: '1. 所有代码必须经过同行审查\n2. 审查通过率需达到 80% 以上\n3. 关键代码需经过安全审查', createdAt: new Date().toISOString() },
+            { id: 4, title: '考勤与休假制度', category: 'hr', content: '1. 工作时间：周一至周五 9:00-18:00\n2. 年假：入职满一年享 5 天年假\n3. 病假需提供医生证明', createdAt: new Date().toISOString() },
+            { id: 5, title: '数据合规政策', category: 'compliance', content: '1. 客户数据加密存储\n2. 敏感信息访问需授权\n3. 定期进行合规培训', createdAt: new Date().toISOString() }
+        ];
+
+        async function loadPolicies() {
+            // 初始化时使用默认数据
+            policies = defaultPolicies;
+            renderPolicies();
+            updateCounts();
+        }
+
+        function renderPolicies() {
+            const list = document.getElementById('policyList');
+            let filtered = currentCategory === 'all' ? policies : policies.filter(p => p.category === currentCategory);
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="py-12 text-center text-gray-400">暂无政策记录</div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(p => `
+                <div class="p-4 hover:bg-gray-50">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="px-2 py-1 bg-${categoryColors[p.category]}-100 text-${categoryColors[p.category]}-700 text-xs rounded-full">${categoryNames[p.category]}</span>
+                                <span class="text-sm font-bold text-gray-800">${p.title}</span>
+                            </div>
+                            <p class="text-sm text-gray-600 whitespace-pre-line">${p.content}</p>
+                            <p class="text-xs text-gray-400 mt-2">创建于：${new Date(p.createdAt).toLocaleString('zh-CN')}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="editPolicy(${p.id})" class="text-blue-600 hover:text-blue-800 text-sm">编辑</button>
+                            <button onclick="deletePolicy(${p.id})" class="text-red-600 hover:text-red-800 text-sm">删除</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCounts() {
+            document.getElementById('totalCount').textContent = policies.length;
+            document.getElementById('operationalCount').textContent = policies.filter(p => p.category === 'operational').length;
+            document.getElementById('financialCount').textContent = policies.filter(p => p.category === 'financial').length;
+            document.getElementById('technicalCount').textContent = policies.filter(p => p.category === 'technical').length;
+        }
+
+        function filterCategory(category) {
+            currentCategory = category;
+            renderPolicies();
+        }
+
+        function openModal() {
+            document.getElementById('policyModal').classList.remove('hidden');
+            document.getElementById('policyModal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('policyModal').classList.add('hidden');
+            document.getElementById('policyModal').classList.remove('flex');
+        }
+
+        function createPolicy(event) {
+            event.preventDefault();
+            const newPolicy = {
+                id: Date.now(),
+                title: document.getElementById('policyTitle').value,
+                category: document.getElementById('policyCategory').value,
+                content: document.getElementById('policyContent').value,
+                createdAt: new Date().toISOString()
+            };
+            policies.push(newPolicy);
+            renderPolicies();
+            updateCounts();
+            closeModal();
+            document.getElementById('policyTitle').value = '';
+            document.getElementById('policyContent').value = '';
+        }
+
+        function deletePolicy(id) {
+            if (confirm('确定要删除这条政策吗？')) {
+                policies = policies.filter(p => p.id !== id);
+                renderPolicies();
+                updateCounts();
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', loadPolicies);
+    </script>
+</body>
+</html>

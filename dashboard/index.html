@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏢 公司智能体监控看板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes pulse-green {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .status-online { animation: pulse-green 2s infinite; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .transition-all { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-3xl">🏢</span>
+                    <div>
+                        <h1 class="text-xl font-bold">公司智能体监控中心</h1>
+                        <p class="text-sm text-blue-200">Corporation Agent Monitor</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="kanban.html" class="text-sm hover:text-white transition">📊 任务看板</a>
+                    <a href="tasks.html" class="text-sm hover:text-white transition">📋 任务管理</a>
+                    <a href="policies.html" class="text-sm hover:text-white transition">📜 公司政策</a>
+                    <a href="skills.html" class="text-sm hover:text-white transition">🛠️ 技能管理</a>
+                    <a href="models.html" class="text-sm hover:text-white transition">🤖 模型配置</a>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 bg-green-400 rounded-full status-online"></span>
+                        <span class="text-sm">Gateway 运行中</span>
+                    </div>
+                    <span class="text-sm" id="currentTime"></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow-md p-5 card-hover transition-all">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">活跃 Agent</p>
+                        <p class="text-3xl font-bold text-blue-600" id="activeAgents">12</p>
+                    </div>
+                    <div class="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">🤖</span>
+                    </div>
+                </div>
+                <div class="mt-3 text-sm text-green-500">✓ 全部在线</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5 card-hover transition-all">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">今日任务</p>
+                        <p class="text-3xl font-bold text-green-600" id="todayTasks">0</p>
+                    </div>
+                    <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">📋</span>
+                    </div>
+                </div>
+                <div class="mt-3 text-sm text-gray-400">完成率 <span class="text-green-500">100%</span></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5 card-hover transition-all">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Token 消耗</p>
+                        <p class="text-3xl font-bold text-purple-600" id="tokenUsage">0</p>
+                    </div>
+                    <div class="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">⚡</span>
+                    </div>
+                </div>
+                <div class="mt-3 text-sm text-gray-400">今日累计</div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5 card-hover transition-all">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">平均响应</p>
+                        <p class="text-3xl font-bold text-orange-600" id="avgResponse">850ms</p>
+                    </div>
+                    <div class="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">⏱️</span>
+                    </div>
+                </div>
+                <div class="mt-3 text-sm text-green-500">性能优秀</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-gray-800">Agent 状态</h2>
+                    <button onclick="refreshData()" class="text-sm text-blue-600 hover:text-blue-700">🔄 刷新</button>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" id="agentGrid"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">最近活动</h2>
+                <div class="space-y-3" id="activityList">
+                    <div class="text-center text-gray-400 py-8">暂无活动记录</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">任务分布</h2>
+                <div class="h-48"><canvas id="taskChart"></canvas></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-lg font-bold text-gray-800 mb-4">响应时间趋势</h2>
+                <div class="h-48"><canvas id="responseChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- 新闻聚合推送 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-800">📰 新闻聚合</h2>
+                <div class="flex items-center space-x-2">
+                    <select id="newsCategory" onchange="loadNews()" class="px-3 py-1 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">全部</option>
+                        <option value="ai">AI 技术</option>
+                        <option value="industry">行业动态</option>
+                        <option value="company">公司公告</option>
+                    </select>
+                    <button onclick="refreshNews()" class="text-sm text-blue-600 hover:text-blue-700">🔄 刷新</button>
+                </div>
+            </div>
+            <div id="newsList" class="space-y-3">
+                <div class="text-center text-gray-400 py-8">暂无新闻</div>
+            </div>
+        </div>
+
+        <!-- 流转审计日志 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-800">📝 流转审计</h2>
+                <button onclick="loadAuditLogs()" class="text-sm text-blue-600 hover:text-blue-700">🔄 刷新</button>
+            </div>
+            <div id="auditLogList" class="space-y-2 max-h-64 overflow-y-auto">
+                <div class="text-center text-gray-400 py-4">暂无审计记录</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-800">部门绩效</h2>
+                <span class="text-sm text-gray-500">最近 7 天</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">部门</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">任务数</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">完成率</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">平均响应</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">满意度</th>
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">状态</th>
+                        </tr>
+                    </thead>
+                    <tbody id="performanceTable" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-100 border-t mt-8">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between text-sm text-gray-500">
+                <span>公司智能体监控看板 v1.0</span>
+                <span>数据每 5 秒自动刷新</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const agents = [
+            { id: 'ceo', name: 'CEO', emoji: '👔', color: 'blue', role: '战略决策' },
+            { id: 'coo', name: 'COO', emoji: '👕', color: 'green', role: '运营协调' },
+            { id: 'cfo', name: 'CFO', emoji: '👗', color: 'emerald', role: '财务法务' },
+            { id: 'cto', name: 'CTO', emoji: '💼', color: 'purple', role: '技术产品' },
+            { id: 'hr', name: '人力', emoji: '👥', color: 'pink', role: '团队建设' },
+            { id: 'finance', name: '财务', emoji: '💰', color: 'yellow', role: '会计核算' },
+            { id: 'legal', name: '法务', emoji: '⚖️', color: 'indigo', role: '合规风控' },
+            { id: 'marketing', name: '市场', emoji: '📢', color: 'red', role: '品牌营销' },
+            { id: 'sales', name: '销售', emoji: '🤝', color: 'orange', role: '客户开发' },
+            { id: 'engineering', name: '工程', emoji: '🔧', color: 'cyan', role: '核心开发' },
+            { id: 'design', name: '设计', emoji: '🎨', color: 'fuchsia', role: 'UI/UX' },
+            { id: 'qa', name: 'QA', emoji: '✅', color: 'teal', role: '质量检查' }
+        ];
+
+        // 从 API 加载数据
+        async function loadStats() {
+            try {
+                const res = await fetch('/api/stats');
+                return await res.json();
+            } catch (e) {
+                console.error('加载统计失败:', e);
+                return { total: 0, completed: 0, processing: 0, pending: 0, total_tokens: 0, today_tasks: 0 };
+            }
+        }
+
+        async function loadPerformance() {
+            try {
+                const res = await fetch('/api/performance');
+                return await res.json();
+            } catch (e) {
+                console.error('加载绩效失败:', e);
+                return { performance: [] };
+            }
+        }
+
+        async function loadActivities() {
+            try {
+                const res = await fetch('/api/tasks');
+                return await res.json();
+            } catch (e) {
+                console.error('加载活动失败:', e);
+                return { tasks: [] };
+            }
+        }
+
+        async function updateDashboard() {
+            const stats = await loadStats();
+            const perfData = await loadPerformance();
+            const activityData = await loadActivities();
+
+            // 更新核心指标
+            document.getElementById('todayTasks').textContent = stats.today_tasks || 0;
+            document.getElementById('tokenUsage').textContent = (stats.total_tokens || 0).toLocaleString();
+
+            // 更新任务分布图
+            if (window.taskChart) {
+                window.taskChart.data.datasets[0].data = [stats.completed || 0, stats.processing || 0, stats.pending || 0];
+                window.taskChart.update();
+            }
+
+            // 更新活动日志
+            renderActivity(activityData.tasks || []);
+
+            // 更新绩效表
+            renderPerformanceTable(perfData.performance || []);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleString('zh-CN');
+        }
+
+        function renderAgents() {
+            document.getElementById('agentGrid').innerHTML = agents.map(agent => `
+                <div class="bg-gradient-to-br from-${agent.color}-50 to-${agent.color}-100 rounded-lg p-4 text-center card-hover transition-all border border-${agent.color}-200">
+                    <span class="text-3xl">${agent.emoji}</span>
+                    <p class="font-bold text-gray-800 mt-2">${agent.name}</p>
+                    <p class="text-xs text-gray-500">${agent.role}</p>
+                    <div class="mt-2 flex items-center justify-center space-x-1">
+                        <span class="w-2 h-2 bg-green-500 rounded-full status-online"></span>
+                        <span class="text-xs text-green-600">在线</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderPerformanceTable(performance) {
+            if (!performance || performance.length === 0) {
+                document.getElementById('performanceTable').innerHTML = '<tr><td class="px-4 py-8 text-center text-gray-400" colspan="6">暂无数据</td></tr>';
+                return;
+            }
+
+            document.getElementById('performanceTable').innerHTML = performance.map(d => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3"><div class="flex items-center space-x-2"><span>${d.agent_emoji}</span><span class="font-medium">${d.agent_name}</span></div></td>
+                    <td class="px-4 py-3 text-gray-600">${d.total_tasks}</td>
+                    <td class="px-4 py-3"><div class="flex items-center space-x-2"><div class="w-16 bg-gray-200 rounded-full h-2"><div class="bg-green-500 h-2 rounded-full" style="width: ${d.completion_rate}%"></div></div><span class="text-sm">${d.completion_rate}%</span></div></td>
+                    <td class="px-4 py-3 text-gray-600">${d.avg_tokens}</td>
+                    <td class="px-4 py-3"><div class="flex items-center space-x-1"><span class="text-yellow-500">⭐</span><span>${d.satisfaction}</span></div></td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">正常</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function initCharts() {
+            // 任务分布图
+            window.taskChart = new Chart(document.getElementById('taskChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['已完成', '进行中', '待处理'],
+                    datasets: [{ data: [0, 0, 0], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // 响应时间趋势图
+            new Chart(document.getElementById('responseChart'), {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    datasets: [{
+                        label: '响应时间 (ms)',
+                        data: [420, 380, 550, 890, 760, 520],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function renderActivity(tasks) {
+            const list = document.getElementById('activityList');
+            if (!tasks || tasks.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-400 py-8">暂无活动记录</div>';
+                return;
+            }
+            const agentMap = {};
+            agents.forEach(a => agentMap[a.id] = a.emoji);
+
+            list.innerHTML = tasks.slice(0, 5).map(task => {
+                const emoji = agentMap[task.agent_id] || '📋';
+                const time = new Date(task.created_at).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+                const statusText = task.status === 'completed' ? '已完成' : task.status === 'processing' ? '进行中' : '待处理';
+                return `
+                    <div class="flex items-start space-x-3 p-2 bg-gray-50 rounded-lg">
+                        <span class="text-lg">${emoji}</span>
+                        <div class="flex-1">
+                            <p class="text-sm text-gray-800 truncate">${task.content.substring(0, 30)}${task.content.length > 30 ? '...' : ''}</p>
+                            <p class="text-xs text-gray-400">${time} · ${statusText}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function refreshData() {
+            updateDashboard();
+        }
+
+        // 新闻聚合
+        async function loadNews() {
+            try {
+                const category = document.getElementById('newsCategory').value;
+                const url = category === 'all' ? '/api/news' : `/api/news?category=${category}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                renderNews(data.news || []);
+            } catch (e) {
+                console.error('加载新闻失败:', e);
+                // 使用默认新闻数据
+                renderNews(getDefaultNews());
+            }
+        }
+
+        function getDefaultNews() {
+            return [
+                { id: 1, title: '公司完成 A 轮融资，估值达 1 亿美元', summary: '本轮融资由知名 VC 领投，资金将用于产品研发和市场拓展', source: '公司公告', category: 'company', publishedAt: new Date().toISOString() },
+                { id: 2, title: 'AI 大模型最新进展：GPT-5 即将发布', summary: 'OpenAI 宣布下一代模型将在下月发布，性能提升显著', source: 'AI 技术日报', category: 'ai', publishedAt: new Date().toISOString() },
+                { id: 3, title: '2026 年科技行业趋势预测', summary: '分析师预测 AI、量子计算、生物技术将成为三大增长点', source: '科技周刊', category: 'industry', publishedAt: new Date().toISOString() }
+            ];
+        }
+
+        function renderNews(news) {
+            const list = document.getElementById('newsList');
+            if (!news || news.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-400 py-8">暂无新闻</div>';
+                return;
+            }
+            const categoryColors = { 'ai': 'blue', 'industry': 'green', 'company': 'purple' };
+            const categoryNames = { 'ai': 'AI 技术', 'industry': '行业动态', 'company': '公司公告' };
+            list.innerHTML = news.slice(0, 5).map(n => `
+                <div class="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <span class="px-2 py-0.5 bg-${categoryColors[n.category] || 'gray'}-100 text-${categoryColors[n.category] || 'gray'}-700 text-xs rounded">${categoryNames[n.category] || n.category}</span>
+                                <span class="font-medium text-gray-800">${n.title}</span>
+                            </div>
+                            <p class="text-sm text-gray-600">${n.summary}</p>
+                            <p class="text-xs text-gray-400 mt-1">${n.source} · ${new Date(n.publishedAt).toLocaleString('zh-CN')}</p>
+                        </div>
+                        ${n.url ? `<a href="${n.url}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">阅读</a>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function refreshNews() {
+            loadNews();
+        }
+
+        // 流转审计
+        async function loadAuditLogs() {
+            try {
+                const res = await fetch('/api/audit-logs');
+                const data = await res.json();
+                renderAuditLogs(data.audit_logs || []);
+            } catch (e) {
+                console.error('加载审计日志失败:', e);
+                renderAuditLogs([]);
+            }
+        }
+
+        function renderAuditLogs(logs) {
+            const list = document.getElementById('auditLogList');
+            if (!logs || logs.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-400 py-4">暂无审计记录</div>';
+                return;
+            }
+            list.innerHTML = logs.slice(0, 10).map(log => `
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-gray-600">任务 #${log.task_id}</span>
+                        <span class="text-gray-400">→</span>
+                        <span class="font-medium">${log.from_status || '新建'}</span>
+                        <span class="text-blue-500">→</span>
+                        <span class="font-medium text-green-600">${log.to_status}</span>
+                    </div>
+                    <span class="text-gray-400 text-xs">${new Date(log.created_at).toLocaleString('zh-CN', {hour:'2-digit',minute:'2-digit'})}</span>
+                </div>
+            `).join('');
+        }
+
+        // WebSocket 实时连接
+        function connectWebSocket() {
+            const ws = new WebSocket('ws://' + window.location.host.replace('8080', '8765'));
+            ws.onopen = () => console.log('✅ WebSocket 已连接');
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('📩 收到推送:', data);
+                if (data.type === 'task_created' || data.type === 'task_status_changed') {
+                    updateDashboard();
+                } else if (data.type === 'news') {
+                    loadNews();
+                }
+            };
+            ws.onclose = () => { setTimeout(connectWebSocket, 3000); };
+            ws.onerror = (e) => console.error('WebSocket 错误:', e);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTime();
+            renderAgents();
+            initCharts();
+            updateDashboard();
+            loadNews();
+            loadAuditLogs();
+            connectWebSocket();
+            setInterval(() => { updateTime(); refreshData(); loadNews(); loadAuditLogs(); }, 5000);
+        });
+    </script>
+</body>
+</html>

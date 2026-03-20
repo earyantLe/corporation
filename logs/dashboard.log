@@ -1,0 +1,11 @@
+127.0.0.1 - - [20/Mar/2026 14:35:09] "GET /kanban.html HTTP/1.1" 200 -
+10.211.55.2 - - [20/Mar/2026 14:35:22] "GET /api/stats HTTP/1.1" 200 -
+10.211.55.2 - - [20/Mar/2026 14:35:22] "GET /api/performance HTTP/1.1" 200 -
+10.211.55.2 - - [20/Mar/2026 14:35:22] "GET /api/tasks HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 14:35:41] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 14:35:41] "GET /policies.html HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 14:35:41] "GET /skills.html HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 14:35:41] "GET /models.html HTTP/1.1" 200 -
+10.211.55.2 - - [20/Mar/2026 14:36:23] "GET /api/stats HTTP/1.1" 200 -
+10.211.55.2 - - [20/Mar/2026 14:36:23] "GET /api/performance HTTP/1.1" 200 -
+10.211.55.2 - - [20/Mar/2026 14:36:23] "GET /api/tasks HTTP/1.1" 200 -

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公司任务看板 - 公司智能体</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .kanban-column { min-height: 400px; }
+        .kanban-card:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+        .kanban-card { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">📊</span>
+                    <div>
+                        <h1 class="text-lg font-bold">公司任务看板</h1>
+                        <p class="text-sm text-blue-200">Task Kanban Board</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-sm hover:text-white transition">📊 监控看板</a>
+                    <a href="tasks.html" class="text-sm hover:text-white transition">📋 任务管理</a>
+                    <a href="policies.html" class="text-sm hover:text-white transition">📜 公司政策</a>
+                    <a href="skills.html" class="text-sm hover:text-white transition">🛠️ 技能管理</a>
+                    <a href="models.html" class="text-sm hover:text-white transition">🤖 模型配置</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <!-- 筛选栏 -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+            <div class="flex flex-wrap gap-3 items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-sm text-gray-600"> Agent:</span>
+                    <select id="agentFilter" onchange="renderBoard()" class="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">全部</option>
+                        <option value="ceo">👔 CEO</option>
+                        <option value="coo">👕 COO</option>
+                        <option value="cfo">👗 CFO</option>
+                        <option value="cto">💼 CTO</option>
+                        <option value="hr">👥 人力</option>
+                        <option value="finance">💰 财务</option>
+                        <option value="legal">⚖️ 法务</option>
+                        <option value="marketing">📢 市场</option>
+                        <option value="sales">🤝 销售</option>
+                        <option value="engineering">🔧 工程</option>
+                        <option value="design">🎨 设计</option>
+                        <option value="qa">✅ QA</option>
+                    </select>
+                </div>
+                <button onclick="loadBoard()" class="text-sm text-blue-600 hover:text-blue-700">🔄 刷新</button>
+            </div>
+        </div>
+
+        <!-- 看板列 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- 待处理 -->
+            <div class="bg-orange-50 rounded-xl p-4 kanban-column">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-bold text-gray-800 flex items-center">
+                        <span class="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>
+                        待处理
+                    </h2>
+                    <span class="text-sm text-gray-500" id="pendingCount">0</span>
+                </div>
+                <div id="pendingColumn" class="space-y-3"></div>
+            </div>
+
+            <!-- 进行中 -->
+            <div class="bg-blue-50 rounded-xl p-4 kanban-column">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-bold text-gray-800 flex items-center">
+                        <span class="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
+                        进行中
+                    </h2>
+                    <span class="text-sm text-gray-500" id="processingCount">0</span>
+                </div>
+                <div id="processingColumn" class="space-y-3"></div>
+            </div>
+
+            <!-- 已完成 -->
+            <div class="bg-green-50 rounded-xl p-4 kanban-column">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-bold text-gray-800 flex items-center">
+                        <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+                        已完成
+                    </h2>
+                    <span class="text-sm text-gray-500" id="completedCount">0</span>
+                </div>
+                <div id="completedColumn" class="space-y-3"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const agents = {
+            'ceo': { emoji: '👔', name: 'CEO' },
+            'coo': { emoji: '👕', name: 'COO' },
+            'cfo': { emoji: '👗', name: 'CFO' },
+            'cto': { emoji: '💼', name: 'CTO' },
+            'hr': { emoji: '👥', name: '人力' },
+            'finance': { emoji: '💰', name: '财务' },
+            'legal': { emoji: '⚖️', name: '法务' },
+            'marketing': { emoji: '📢', name: '市场' },
+            'sales': { emoji: '🤝', name: '销售' },
+            'engineering': { emoji: '🔧', name: '工程' },
+            'design': { emoji: '🎨', name: '设计' },
+            'qa': { emoji: '✅', name: 'QA' }
+        };
+
+        let tasks = [];
+
+        async function loadBoard() {
+            try {
+                const res = await fetch('/api/tasks');
+                const data = await res.json();
+                tasks = data.tasks || [];
+                renderBoard();
+            } catch (e) {
+                console.error('加载看板失败:', e);
+            }
+        }
+
+        function renderBoard() {
+            const agentFilter = document.getElementById('agentFilter').value;
+            let filtered = tasks;
+            if (agentFilter !== 'all') {
+                filtered = tasks.filter(t => t.agent_id === agentFilter);
+            }
+
+            const pending = filtered.filter(t => t.status === 'pending');
+            const processing = filtered.filter(t => t.status === 'processing');
+            const completed = filtered.filter(t => t.status === 'completed');
+
+            document.getElementById('pendingCount').textContent = pending.length;
+            document.getElementById('processingCount').textContent = processing.length;
+            document.getElementById('completedCount').textContent = completed.length;
+
+            document.getElementById('pendingColumn').innerHTML = pending.map(t => renderCard(t)).join('');
+            document.getElementById('processingColumn').innerHTML = processing.map(t => renderCard(t)).join('');
+            document.getElementById('completedColumn').innerHTML = completed.map(t => renderCard(t)).join('');
+        }
+
+        function renderCard(task) {
+            const agent = agents[task.agent_id] || { emoji: '📋', name: '未知' };
+            const time = new Date(task.created_at).toLocaleDateString('zh-CN');
+            const priorityClass = {
+                'high': 'bg-red-100 text-red-700',
+                'normal': 'bg-gray-100 text-gray-700'
+            }[task.priority || 'normal'];
+            const priorityText = {
+                'high': '🔥 高',
+                'normal': '正常'
+            }[task.priority || 'normal'];
+
+            return `
+                <div class="bg-white rounded-lg p-4 shadow kanban-card cursor-pointer" onclick="moveTask(${task.id})">
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xl">${agent.emoji}</span>
+                            <span class="font-medium text-gray-800 text-sm">${agent.name}</span>
+                        </div>
+                        ${task.paused ? '<span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded">⏸️</span>' : ''}
+                    </div>
+                    <p class="text-sm text-gray-700 mb-2 line-clamp-2">${task.content}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-400">${time}</span>
+                        <span class="px-2 py-1 ${priorityClass} text-xs rounded">${priorityText || '正常'}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function moveTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const statusMap = {
+                'pending': 'processing',
+                'processing': 'completed',
+                'completed': 'pending'
+            };
+            const newStatus = statusMap[task.status];
+
+            if (confirm(`将任务 #${taskId} 从 "${task.status}" 移动到 "${newStatus}"？`)) {
+                try {
+                    await fetch(`/api/tasks/${taskId}/status`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+                    await loadBoard();
+                } catch (e) {
+                    alert('更新失败：' + e.message);
+                }
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', loadBoard);
+    </script>
+</body>
+</html>
