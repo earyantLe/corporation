@@ -25,8 +25,11 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <a href="/" class="text-sm hover:text-white transition">📊 监控看板</a>
+                    <a href="org.html" class="text-sm hover:text-white transition">🏢 组织架构</a>
                     <a href="tasks.html" class="text-sm hover:text-white transition">📋 任务管理</a>
-                    <a href="policies.html" class="text-sm hover:text-white transition">📜 公司政策</a>
+                    <a href="meeting.html" class="text-sm hover:text-white transition">📅 会议管理</a>
+                    <a href="conduct.html" class="text-sm hover:text-white transition">📜 行事准则</a>
+                    <a href="policies.html" class="text-sm hover:text-white transition">📋 公司政策</a>
                     <a href="skills.html" class="text-sm hover:text-white transition">🛠️ 技能管理</a>
                     <a href="models.html" class="text-sm hover:text-white transition">🤖 模型配置</a>
                 </div>
@@ -101,6 +104,17 @@
         </div>
     </main>
 
+    <!-- 任务详情模态框 -->
+    <div id="taskModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">📋 任务详情</h2>
+                <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            </div>
+            <div id="taskDetail"></div>
+        </div>
+    </div>
+
     <script>
         const agents = {
             'ceo': { emoji: '👔', name: 'CEO' },
@@ -163,7 +177,7 @@
             }[task.priority || 'normal'];
 
             return `
-                <div class="bg-white rounded-lg p-4 shadow kanban-card cursor-pointer" onclick="moveTask(${task.id})">
+                <div class="bg-white rounded-lg p-4 shadow kanban-card cursor-pointer" onclick="viewDetail(${task.id})">
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex items-center space-x-2">
                             <span class="text-xl">${agent.emoji}</span>
@@ -178,6 +192,78 @@
                     </div>
                 </div>
             `;
+        }
+
+        function viewDetail(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const agent = agents[task.agent_id] || { emoji: '📋', name: '未知' };
+            const time = new Date(task.created_at).toLocaleString('zh-CN');
+
+            document.getElementById('taskDetail').innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl">${agent.emoji}</span>
+                        <div>
+                            <p class="font-bold text-gray-800">${agent.name}</p>
+                            <p class="text-sm text-gray-500">任务 #${task.id}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">任务内容</p>
+                        <p class="text-gray-800 whitespace-pre-wrap">${task.content}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500">状态</p>
+                            <p class="font-medium text-gray-800">${task.status === 'pending' ? '待处理' : task.status === 'processing' ? '进行中' : '已完成'}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Token 消耗</p>
+                            <p class="font-medium text-gray-800">${task.tokens?.toLocaleString() || 0}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">创建时间</p>
+                            <p class="font-medium text-gray-800">${time}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">优先级</p>
+                            <p class="font-medium text-gray-800">${task.priority === 'high' ? '🔥 高优先级' : task.priority === 'low' ? '低优先级' : '正常'}</p>
+                        </div>
+                    </div>
+                    ${task.paused ? '<div class="px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-700">⏸️ 任务已暂停</div>' : ''}
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="updateStatus(${task.id}, 'pending')" class="px-3 py-1 bg-orange-100 text-orange-700 rounded-lg text-sm hover:bg-orange-200">设为待处理</button>
+                        <button onclick="updateStatus(${task.id}, 'processing')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200">设为进行中</button>
+                        <button onclick="updateStatus(${task.id}, 'completed')" class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200">设为已完成</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('taskModal').classList.remove('hidden');
+            document.getElementById('taskModal').classList.add('flex');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+            document.getElementById('taskModal').classList.remove('flex');
+        }
+
+        async function updateStatus(taskId, status) {
+            try {
+                const res = await fetch(`/api/tasks/${taskId}/status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadBoard();
+                    closeDetailModal();
+                }
+            } catch (e) {
+                alert('更新失败：' + e.message);
+            }
         }
 
         async function moveTask(taskId) {
