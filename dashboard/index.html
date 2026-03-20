@@ -165,7 +165,22 @@
 
         <div class="bg-white rounded-xl shadow-md p-6">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-bold text-gray-800">部门绩效</h2>
+                <div class="flex items-center space-x-2">
+                    <h2 class="text-lg font-bold text-gray-800">部门绩效</h2>
+                    <div class="group relative">
+                        <span class="flex items-center justify-center w-5 h-5 bg-gray-200 text-gray-600 text-xs rounded-full cursor-help hover:bg-gray-300 transition">?</span>
+                        <div class="absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                            <p class="font-bold mb-1">📊 部门绩效说明</p>
+                            <ul class="space-y-1 text-gray-300">
+                                <li>• <strong>任务数</strong>：该部门完成的任务总数</li>
+                                <li>• <strong>完成率</strong>：已完成任务占总任务的百分比</li>
+                                <li>• <strong>平均 Token</strong>：每次任务的平均资源消耗</li>
+                                <li>• <strong>满意度</strong>：基于任务完成质量的评分 (1-5 星)</li>
+                            </ul>
+                            <div class="absolute left-3 bottom-0 w-2 h-2 bg-gray-800 transform rotate-45 -mb-1"></div>
+                        </div>
+                    </div>
+                </div>
                 <span class="text-sm text-gray-500">最近 7 天</span>
             </div>
             <div class="overflow-x-auto">
