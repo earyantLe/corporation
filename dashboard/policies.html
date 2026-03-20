@@ -150,18 +150,23 @@
             'compliance': 'blue'
         };
 
-        // 默认政策数据
-        const defaultPolicies = [
-            { id: 1, title: 'Agent 协作规范', category: 'operational', content: '1. 所有任务必须经过 CEO 分配\n2. 跨部门协作需通过 COO 协调\n3. 重要决策需经过相关部门会签', createdAt: new Date().toISOString() },
-            { id: 2, title: '财务报销制度', category: 'financial', content: '1. 单笔支出超过 1000 元需 CFO 审批\n2. 月度预算由财务部统一管理\n3. 所有支出需有合法票据', createdAt: new Date().toISOString() },
-            { id: 3, title: '代码审查规范', category: 'technical', content: '1. 所有代码必须经过同行审查\n2. 审查通过率需达到 80% 以上\n3. 关键代码需经过安全审查', createdAt: new Date().toISOString() },
-            { id: 4, title: '考勤与休假制度', category: 'hr', content: '1. 工作时间：周一至周五 9:00-18:00\n2. 年假：入职满一年享 5 天年假\n3. 病假需提供医生证明', createdAt: new Date().toISOString() },
-            { id: 5, title: '数据合规政策', category: 'compliance', content: '1. 客户数据加密存储\n2. 敏感信息访问需授权\n3. 定期进行合规培训', createdAt: new Date().toISOString() }
+        let policies = [];
+
+        // 内置政策数据（系统初始策略）
+        const systemPolicies = [
+            { id: 1, title: 'Agent 协作规范', category: 'operational', content: '1. 所有任务必须经过 CEO 分配\n2. 跨部门协作需通过 COO 协调\n3. 重要决策需经过相关部门会签', createdAt: new Date('2026-03-01').toISOString() },
+            { id: 2, title: '财务报销制度', category: 'financial', content: '1. 单笔支出超过 1000 元需 CFO 审批\n2. 月度预算由财务部统一管理\n3. 所有支出需有合法票据', createdAt: new Date('2026-03-01').toISOString() },
+            { id: 3, title: '代码审查规范', category: 'technical', content: '1. 所有代码必须经过同行审查\n2. 审查通过率需达到 80% 以上\n3. 关键代码需经过安全审查', createdAt: new Date('2026-03-01').toISOString() },
+            { id: 4, title: '考勤与休假制度', category: 'hr', content: '1. 工作时间：周一至周五 9:00-18:00\n2. 年假：入职满一年享 5 天年假\n3. 病假需提供医生证明', createdAt: new Date('2026-03-01').toISOString() },
+            { id: 5, title: '数据合规政策', category: 'compliance', content: '1. 客户数据加密存储\n2. 敏感信息访问需授权\n3. 定期进行合规培训', createdAt: new Date('2026-03-01').toISOString() }
         ];
 
         async function loadPolicies() {
-            // 初始化时使用默认数据
-            policies = defaultPolicies;
+            // 从 localStorage 读取用户添加的政策
+            const stored = localStorage.getItem('customPolicies');
+            const customPolicies = stored ? JSON.parse(stored) : [];
+            // 合并系统政策和自定义政策
+            policies = [...systemPolicies, ...customPolicies];
             renderPolicies();
             updateCounts();
         }
@@ -226,6 +231,11 @@
                 content: document.getElementById('policyContent').value,
                 createdAt: new Date().toISOString()
             };
+            // 保存到 localStorage
+            const stored = localStorage.getItem('customPolicies');
+            const customPolicies = stored ? JSON.parse(stored) : [];
+            customPolicies.push(newPolicy);
+            localStorage.setItem('customPolicies', JSON.stringify(customPolicies));
             policies.push(newPolicy);
             renderPolicies();
             updateCounts();
@@ -235,7 +245,18 @@
         }
 
         function deletePolicy(id) {
+            // 系统政策不允许删除
+            if (id <= 5) {
+                alert('系统内置政策不允许删除');
+                return;
+            }
             if (confirm('确定要删除这条政策吗？')) {
+                // 从 localStorage 删除
+                const stored = localStorage.getItem('customPolicies');
+                const customPolicies = stored ? JSON.parse(stored) : [];
+                const filtered = customPolicies.filter(p => p.id !== id);
+                localStorage.setItem('customPolicies', JSON.stringify(filtered));
+                // 更新内存
                 policies = policies.filter(p => p.id !== id);
                 renderPolicies();
                 updateCounts();

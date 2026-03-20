@@ -205,12 +205,18 @@
             'one2one': { name: '1 对 1', color: 'pink', icon: '👥' }
         };
 
-        // 默认会议数据
-        let meetings = [
-            { id: 1, title: '每日站会', type: 'standup', attendees: ['cto', 'engineering', 'qa'], agenda: '1. 昨日进展\n2. 今日计划\n3. 阻塞问题', scheduledAt: new Date(Date.now() + 3600000).toISOString(), status: 'upcoming' },
-            { id: 2, title: 'Q2 战略规划会', type: 'strategy', attendees: ['ceo', 'coo', 'cfo', 'cto'], agenda: '1. Q1 复盘\n2. Q2 目标\n3. 资源分配', scheduledAt: new Date(Date.now() + 86400000).toISOString(), status: 'upcoming' },
-            { id: 3, title: '产品评审会', type: 'review', attendees: ['cto', 'engineering', 'design'], agenda: '1. 原型演示\n2. 技术评审\n3. 排期评估', scheduledAt: new Date(Date.now() - 86400000).toISOString(), status: 'completed' }
-        ];
+        let meetings = [];
+
+        // 从 localStorage 加载会议数据
+        function loadMeetings() {
+            const stored = localStorage.getItem('meetings');
+            meetings = stored ? JSON.parse(stored) : [];
+            renderMeetings();
+        }
+
+        function saveMeetings() {
+            localStorage.setItem('meetings', JSON.stringify(meetings));
+        }
 
         function renderMeetings() {
             const upcoming = meetings.filter(m => m.status === 'upcoming');
@@ -282,6 +288,7 @@
                 status: 'upcoming'
             };
             meetings.push(newMeeting);
+            saveMeetings();
             renderMeetings();
             closeModal();
             event.target.reset();
@@ -299,6 +306,7 @@
                 status: 'upcoming'
             };
             meetings.push(newMeeting);
+            saveMeetings();
             renderMeetings();
         }
 
@@ -306,6 +314,7 @@
             const meeting = meetings.find(m => m.id === id);
             if (meeting) {
                 meeting.status = 'ongoing';
+                saveMeetings();
                 renderMeetings();
                 alert(`会议"${meeting.title}"已开始`);
             }
@@ -315,12 +324,13 @@
             const meeting = meetings.find(m => m.id === id);
             if (meeting) {
                 meeting.scheduledAt = new Date(Date.now() + 3600000).toISOString();
+                saveMeetings();
                 renderMeetings();
                 alert(`会议"${meeting.title}"已改期到 1 小时后`);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', renderMeetings);
+        document.addEventListener('DOMContentLoaded', loadMeetings);
     </script>
 </body>
 </html>
