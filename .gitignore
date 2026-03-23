@@ -1,55 +1,21 @@
-# OpenClaw 配置
+# OpenClaw
 ~/.openclaw/
 openclaw.json
 
-# 日志文件
-logs/*.log
+# 日志
 *.log
+logs/
 
-# 缓存和临时文件
+# 缓存
+__pycache__/
 .cache/
-.tmp/
-*.tmp
 *.swp
-*.swo
 *~
 
-# 系统文件
+# 系统
 .DS_Store
 Thumbs.db
 
-# Node.js
-node_modules/
-npm-debug.log
-yarn-error.log
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.Python
-venv/
-env/
-.env
-
-# IDE
-.idea/
-.vscode/
-*.sublime-*
-
-# 构建输出
-dist/
-build/
-*.egg-info/
-
-# 测试覆盖率
-coverage/
-.htmlcov/
-
-# 数据文件（敏感信息）
-data/*.json
+# 数据
+data/*.db
 !data/.gitkeep
-
-# Dashboard 运行时文件
-dashboard/runtime/
-dashboard/.env
