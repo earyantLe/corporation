@@ -1,8 +1,28 @@
 #!/bin/bash
 # 🏢 公司智能体 · 安装脚本
 # 用法：./install.sh
+#
+# 功能：
+# - 检查系统依赖
+# - 配置 API Key
+# - 注册公司 Agent
+# - 初始化工作空间
+# - 验证安装结果
 
 set -euo pipefail
+
+# 颜色输出
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# 日志函数
+log_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
+log_success() { echo -e "${GREEN}✅ $1${NC}"; }
+log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
+log_error() { echo -e "${RED}❌ $1${NC}"; }
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -12,14 +32,19 @@ echo "========================"
 echo ""
 
 # 检查 OpenClaw 是否安装
+log_info "检查 OpenClaw 安装..."
 if ! command -v openclaw &> /dev/null; then
-    echo "❌ 未检测到 OpenClaw，请先安装："
-    echo "   brew install openclaw"
+    log_error "未检测到 OpenClaw"
+    echo ""
+    echo "请先安装 OpenClaw："
+    echo "   npm install -g openclaw"
     echo "   或访问：https://openclaw.ai"
+    echo ""
     exit 1
 fi
 
-echo "✅ OpenClaw 已安装：$(openclaw --version)"
+OPENCLAW_VERSION=$(openclaw --version 2>&1 || echo "未知版本")
+log_success "OpenClaw 已安装：$OPENCLAW_VERSION"
 echo ""
 
 # 检查是否已配置 API Key
