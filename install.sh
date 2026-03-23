@@ -278,103 +278,106 @@ done
 echo "✅ Agent 协作关系配置完成"
 echo ""
 
-# 注册 Agent 到 openclaw.json
-echo "📜 注册公司到 openclaw.json..."
+# 注册 Agent 到 OpenClaw
+echo "📜 注册 Agent 到 OpenClaw..."
 
 OCLAW_CONFIG="$HOME/.openclaw/openclaw.json"
 
-if [[ ! -f "$OCLAW_CONFIG" ]]; then
-    echo "   创建 openclaw.json..."
-    cat > "$OCLAW_CONFIG" << 'EOF'
-{
-  "agents": [],
-  "permissions": {},
-  "skills": {}
-}
-EOF
-fi
-
-# 使用 Python 脚本注册 Agent
-python3 - << 'PYTHON_SCRIPT'
+# 使用 openclaw agents add 命令注册每个 Agent
+for agent_id in "${AGENTS[@]}"; do
+    agent_label=$(python3 -c "
 import json
-import os
+from pathlib import Path
+config_path = Path('$SCRIPT_DIR/agents/$agent_id/SOUL.md')
+if config_path.exists():
+    content = config_path.read_text(encoding='utf-8')
+    import re
+    match = re.search(r'^#\s*.*?(\S+)\s+·\s*(.+?)\s*$', content, re.MULTILINE)
+    if match:
+        print(f'{match.group(1)} ({match.group(2)})')
+    else:
+        print('$agent_id')
+else:
+    print('$agent_id')
+" 2>/dev/null || echo "$agent_id")
+
+    # 检查工作空间是否存在
+    workspace_dir="$HOME/.openclaw/workspace-$agent_id"
+    if [[ ! -d "$workspace_dir" ]]; then
+        echo "   ⚠️  $agent_id 工作空间不存在，跳过注册"
+        continue
+    fi
+
+    # 检查是否已在配置中存在
+    if python3 -c "
+import json
+from pathlib import Path
+config_path = Path.home() / '.openclaw' / 'openclaw.json'
+if config_path.exists():
+    config = json.load(open(config_path))
+    agents_list = config.get('agents', {}).get('list', [])
+    for agent in agents_list:
+        if isinstance(agent, dict) and agent.get('id') == '$agent_id':
+            exit(0)
+exit(1)
+" 2>/dev/null; then
+        echo "   ✅ $agent_id 已注册，跳过"
+        continue
+    fi
+
+    # 使用 openclaw agents add 命令注册
+    echo "   注册 $agent_label (${agent_id})..."
+    if openclaw agents add "$agent_id" --non-interactive 2>/dev/null; then
+        echo "   ✅ $agent_id 注册成功"
+    else
+        echo "   ⚠️  openclaw agents add 失败，将尝试手动配置"
+    fi
+done
+
+# 配置 openclaw.json 的子 Agent 权限（所有部门可以互相协作）
+echo "🔐 配置 Agent 协作权限..."
+
+python3 << 'PYTHON_SCRIPT'
+import json
 from pathlib import Path
 
 config_path = Path.home() / '.openclaw' / 'openclaw.json'
-home_dir = Path.home()
 
-# 读取配置
-if config_path.exists():
-    with open(config_path) as f:
-        config = json.load(f)
-else:
-    config = {"agents": {"list": []}}
+if not config_path.exists():
+    print("   ⚠️  openclaw.json 不存在，跳过权限配置")
+    exit(0)
 
-# 公司角色定义（按 OpenClaw 格式）
-company_roles = [
-    {"id": "ceo", "label": "CEO", "description": "任务接收与分配/战略决策/成果审批"},
-    {"id": "coo", "label": "COO", "description": "运营管理/人力资源/进度跟踪/跨部门协调"},
-    {"id": "cfo", "label": "CFO", "description": "财务管理/预算规划/财务分析/法务支持"},
-    {"id": "cto", "label": "CTO", "description": "技术决策/技术管理/产品规划/技术支持"},
-    {"id": "hr", "label": "HR", "description": "招聘管理/绩效管理/培训发展/员工关系"},
-    {"id": "finance", "label": "财务总监", "description": "会计核算/资金管理/税务管理/成本管理"},
-    {"id": "legal", "label": "法务总监", "description": "合同管理/合规管理/风险控制/知识产权"},
-    {"id": "marketing", "label": "市场总监", "description": "市场调研/品牌管理/营销策划/数字营销"},
-    {"id": "sales", "label": "销售总监", "description": "销售管理/客户开发/商务谈判/客户服务"},
-    {"id": "engineering", "label": "工程总监", "description": "软件开发/技术攻坚/代码质量/团队协作"},
-    {"id": "design", "label": "设计总监", "description": "UI 设计/UX 设计/品牌设计/设计评审"},
-    {"id": "qa", "label": "QA 总监", "description": "质量检查/测试管理/流程优化/风险评估"},
-]
+with open(config_path) as f:
+    config = json.load(f)
 
-# 权限矩阵（所有部门可以互相协作）
-all_agents = ["ceo", "coo", "cfo", "cto", "hr", "finance", "legal", "marketing", "sales", "engineering", "design", "qa"]
-permissions = {}
-for role in company_roles:
-    permissions[role["id"]] = [a for a in all_agents if a != role["id"]]
-
-# 获取现有 agents 列表
-agents_data = config.get("agents", {})
-
-# 处理不同的 agents 结构
-if isinstance(agents_data, dict):
-    # 如果有 list 键，使用它；否则初始化
-    if "list" in agents_data:
-        agents_list = agents_data["list"]
-    else:
-        agents_list = []
-        config["agents"]["list"] = agents_list
-elif isinstance(agents_data, list):
-    agents_list = agents_data
-    config["agents"] = {"list": agents_list}
-else:
-    agents_list = []
+# 确保 agents 是 dict 格式
+if "agents" not in config or not isinstance(config["agents"], dict):
     config["agents"] = {"list": []}
 
-existing_ids = {a.get("id") for a in agents_list if isinstance(a, dict) and a.get("id")}
+if "list" not in config["agents"]:
+    config["agents"]["list"] = []
 
-# 添加新 Agent（按 OpenClaw 格式）
-for role in company_roles:
-    if role["id"] not in existing_ids:
-        agent_config = {
-            "id": role["id"],
-            "workspace": str(home_dir / f'.openclaw/workspace-{role["id"]}'),
-            "subagents": {
-                "allowAgents": permissions.get(role["id"], [])
-            }
-        }
-        # 确保 agents.list 存在
-        if not isinstance(config.get("agents"), dict):
-            config["agents"] = {"list": []}
-        if "list" not in config["agents"]:
-            config["agents"]["list"] = []
-        config["agents"]["list"].append(agent_config)
-        print(f"   注册 {role['label']} ({role['id']})")
+agents_list = config["agents"]["list"]
+
+# 所有部门可以互相协作
+all_agents = ["ceo", "coo", "cfo", "cto", "hr", "finance", "legal", "marketing", "sales", "engineering", "design", "qa"]
+
+# 为每个已注册的 Agent 配置 allowAgents
+for agent in agents_list:
+    if isinstance(agent, dict) and agent.get("id") in all_agents:
+        agent_id = agent["id"]
+        # 计算可协作的部门（排除自己）
+        allow_agents = [a for a in all_agents if a != agent_id]
+        if "subagents" not in agent:
+            agent["subagents"] = {}
+        agent["subagents"]["allowAgents"] = allow_agents
+        print(f"   ✅ {agent_id} 协作权限已配置")
 
 # 保存配置
 with open(config_path, "w") as f:
     json.dump(config, f, indent=2, ensure_ascii=False)
 
-print("✅ 公司注册完成")
+print("✅ 协作权限配置完成")
 PYTHON_SCRIPT
 
 echo ""
