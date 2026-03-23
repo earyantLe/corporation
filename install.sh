@@ -308,11 +308,19 @@ for role in company_roles:
     permissions[role["id"]] = [a for a in all_agents if a != role["id"]]
 
 # 获取现有 agents 列表
-agents_data = config.get("agents", {"list": []})
+agents_data = config.get("agents", {})
+
+# 处理不同的 agents 结构
 if isinstance(agents_data, dict):
-    agents_list = agents_data.get("list", [])
+    # 如果有 list 键，使用它；否则初始化
+    if "list" in agents_data:
+        agents_list = agents_data["list"]
+    else:
+        agents_list = []
+        config["agents"]["list"] = agents_list
 elif isinstance(agents_data, list):
     agents_list = agents_data
+    config["agents"] = {"list": agents_list}
 else:
     agents_list = []
     config["agents"] = {"list": []}
@@ -329,10 +337,12 @@ for role in company_roles:
                 "allowAgents": permissions.get(role["id"], [])
             }
         }
-        if isinstance(config.get("agents"), dict):
-            config["agents"]["list"].append(agent_config)
-        else:
-            config["agents"] = {"list": [agent_config]}
+        # 确保 agents.list 存在
+        if not isinstance(config.get("agents"), dict):
+            config["agents"] = {"list": []}
+        if "list" not in config["agents"]:
+            config["agents"]["list"] = []
+        config["agents"]["list"].append(agent_config)
         print(f"   注册 {role['label']} ({role['id']})")
 
 # 保存配置
