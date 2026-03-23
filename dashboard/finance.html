@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财务管理 - 公司智能体</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .finance-card:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .finance-card { transition: all 0.3s ease; }
+        .trend-up { color: #10b981; }
+        .trend-down { color: #ef4444; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg h-20">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">💰</span>
+                    <div>
+                        <h1 class="text-lg font-bold">财务管理</h1>
+                        <p class="text-sm text-blue-200">Finance Management</p>
+                                    </div>
+            </div>
+                <div class="flex items-center space-x-6">
+                    <!-- 核心功能 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>📊 任务</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">监控看板</a>
+                            <a href="kanban.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">任务看板</a>
+                            <a href="tasks.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">任务管理</a>
+                        </div>
+                    </div>
+                    <!-- 业务系统 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>💼 业务</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="finance.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">💰 财务</a>
+                            <a href="crm.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">🤝 CRM</a>
+                            <a href="bi.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">📈 BI 分析</a>
+                        </div>
+                    </div>
+                    <!-- 平台能力 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>🛠️ 平台</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="workflow.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">工作流</a>
+                            <a href="knowledge.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">知识库</a>
+                            <a href="im.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">IM 通讯</a>
+                            <a href="orchestration.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">Agent 编排</a>
+                        </div>
+                    </div>
+                    <!-- 管理设置 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>⚙️ 管理</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="org.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">组织架构</a>
+                            <a href="rbac.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">权限管理</a>
+                            <a href="skills.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">技能配置</a>
+                            <a href="models.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">模型配置</a>
+                        </div>
+                    </div>
+                    <!-- 单独链接 -->
+                    <a href="meeting.html" class="text-sm hover:text-blue-200 transition">📅 会议</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <!-- 提示 -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <div class="flex items-start space-x-3">
+                <span class="text-2xl">💰</span>
+                <div>
+                    <h3 class="font-bold text-blue-800">财务核心系统</h3>
+                    <p class="text-sm text-blue-600 mt-1">总账、应收/应付、预算跟踪、财务报表。企业级财务管理能力。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 财务摘要卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">总收入</p>
+                        <p class="text-2xl font-bold text-green-600" id="totalIncome">¥0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">📈</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">总支出</p>
+                        <p class="text-2xl font-bold text-red-600" id="totalExpense">¥0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">📉</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">净利润</p>
+                        <p class="text-2xl font-bold text-blue-600" id="netProfit">¥0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">💵</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">应收账款</p>
+                        <p class="text-2xl font-bold text-orange-600" id="totalReceivable">¥0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">🧾</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">应付账款</p>
+                        <p class="text-2xl font-bold text-purple-600" id="totalPayable">¥0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">📝</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 切换 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6">
+            <div class="border-b">
+                <div class="flex overflow-x-auto">
+                    <button onclick="switchTab('ledger')" class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-blue-500 text-blue-600 whitespace-nowrap">总账</button>
+                    <button onclick="switchTab('receivables')" class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">应收账款</button>
+                    <button onclick="switchTab('payables')" class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">应付账款</button>
+                    <button onclick="switchTab('budget')" class="tab-btn px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 whitespace-nowrap">预算</button>
+                </div>
+            </div>
+
+            <!-- 总账 -->
+            <div id="ledgerTab" class="p-4">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">总账记录</h3>
+                    <button onclick="loadLedger()" class="text-blue-600 hover:text-blue-700 text-sm">🔄 刷新</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">分录 ID</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">类型</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">科目</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">借方</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">贷方</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">余额</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">日期</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledgerList" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 应收账款 -->
+            <div id="receivablesTab" class="p-4 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">应收账款</h3>
+                    <button onclick="loadReceivables()" class="text-blue-600 hover:text-blue-700 text-sm">🔄 刷新</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">发票 ID</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">客户</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">金额</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">已付</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">状态</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">到期日</th>
+                            </tr>
+                        </thead>
+                        <tbody id="receivablesList" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 应付账款 -->
+            <div id="payablesTab" class="p-4 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">应付账款</h3>
+                    <button onclick="loadPayables()" class="text-blue-600 hover:text-blue-700 text-sm">🔄 刷新</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">账单 ID</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">供应商</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">金额</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">已付</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">状态</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">到期日</th>
+                            </tr>
+                        </thead>
+                        <tbody id="payablesList" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 预算 -->
+            <div id="budgetTab" class="p-4 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">预算</h3>
+                    <button onclick="loadBudget()" class="text-blue-600 hover:text-blue-700 text-sm">🔄 刷新</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">预算 ID</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">部门</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">类别</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">预算金额</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">已用</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">使用率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="budgetList" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 示例数据
+        const sampleSummary = {
+            total_income: 1500000,
+            total_expense: 850000,
+            net_profit: 650000,
+            total_receivable: 230000,
+            total_payable: 120000
+        };
+
+        const sampleLedger = [
+            { entry_id: 'JE20260320001', entry_type: 'income', account_code: '1001', debit: 100000, credit: 0, balance: 500000, created_at: '2026-03-20 10:00:00' },
+            { entry_id: 'JE20260320002', entry_type: 'expense', account_code: '2001', debit: 0, credit: 50000, balance: 450000, created_at: '2026-03-20 11:00:00' },
+            { entry_id: 'JE20260320003', entry_type: 'income', account_code: '1001', debit: 200000, credit: 0, balance: 650000, created_at: '2026-03-20 14:00:00' }
+        ];
+
+        const sampleReceivables = [
+            { invoice_id: 'INV-2026-001', customer_id: '客户 A', amount: 50000, paid_amount: 30000, status: 'partial', due_date: '2026-04-01' },
+            { invoice_id: 'INV-2026-002', customer_id: '客户 B', amount: 80000, paid_amount: 0, status: 'pending', due_date: '2026-04-15' },
+            { invoice_id: 'INV-2026-003', customer_id: '客户 C', amount: 100000, paid_amount: 100000, status: 'paid', due_date: '2026-03-25' }
+        ];
+
+        const samplePayables = [
+            { bill_id: 'BILL-2026-001', vendor_id: '供应商 X', amount: 30000, paid_amount: 30000, status: 'paid', due_date: '2026-03-20' },
+            { bill_id: 'BILL-2026-002', vendor_id: '供应商 Y', amount: 45000, paid_amount: 0, status: 'pending', due_date: '2026-04-10' }
+        ];
+
+        const sampleBudget = [
+            { budget_id: 'BG-2026-001', department: '工程部', category: '研发', amount: 500000, used_amount: 350000 },
+            { budget_id: 'BG-2026-002', department: '市场部', category: '推广', amount: 200000, used_amount: 120000 },
+            { budget_id: 'BG-2026-003', department: '人力', category: '招聘', amount: 100000, used_amount: 60000 }
+        ];
+
+        function switchTab(tab) {
+            ['ledger', 'receivables', 'payables', 'budget'].forEach(t => {
+                document.getElementById(t + 'Tab').classList.add('hidden');
+            });
+            document.getElementById(tab + 'Tab').classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            event.target.classList.remove('border-transparent', 'text-gray-500');
+            event.target.classList.add('border-blue-500', 'text-blue-600');
+        }
+
+        function formatCurrency(num) {
+            return '¥' + num.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        async function loadFinanceSummary() {
+            try {
+                const res = await fetch('/api/finance/summary');
+                const data = await res.json();
+                const summary = data.total_income !== undefined ? data : sampleSummary;
+
+                document.getElementById('totalIncome').textContent = formatCurrency(summary.total_income || 0);
+                document.getElementById('totalExpense').textContent = formatCurrency(summary.total_expense || 0);
+                document.getElementById('netProfit').textContent = formatCurrency(summary.net_profit || 0);
+                document.getElementById('totalReceivable').textContent = formatCurrency(summary.total_receivable || 0);
+                document.getElementById('totalPayable').textContent = formatCurrency(summary.total_payable || 0);
+            } catch (e) {
+                const s = sampleSummary;
+                document.getElementById('totalIncome').textContent = formatCurrency(s.total_income);
+                document.getElementById('totalExpense').textContent = formatCurrency(s.total_expense);
+                document.getElementById('netProfit').textContent = formatCurrency(s.net_profit);
+                document.getElementById('totalReceivable').textContent = formatCurrency(s.total_receivable);
+                document.getElementById('totalPayable').textContent = formatCurrency(s.total_payable);
+            }
+        }
+
+        async function loadLedger() {
+            try {
+                const res = await fetch('/api/finance/ledger');
+                const data = await res.json();
+                const entries = data.entries || sampleLedger;
+                renderLedger(entries);
+            } catch (e) {
+                renderLedger(sampleLedger);
+            }
+        }
+
+        function renderLedger(entries) {
+            const tbody = document.getElementById('ledgerList');
+            const typeNames = { income: '📈 收入', expense: '📉 支出', transfer: '🔄 转账' };
+
+            tbody.innerHTML = entries.map(e => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-800">${e.entry_id}</td>
+                    <td class="px-4 py-3">${typeNames[e.entry_type] || e.entry_type}</td>
+                    <td class="px-4 py-3 text-gray-600">${e.account_code}</td>
+                    <td class="px-4 py-3 text-green-600">${e.debit > 0 ? formatCurrency(e.debit) : '-'}</td>
+                    <td class="px-4 py-3 text-red-600">${e.credit > 0 ? formatCurrency(e.credit) : '-'}</td>
+                    <td class="px-4 py-3 font-medium">${formatCurrency(e.balance)}</td>
+                    <td class="px-4 py-3 text-gray-500">${e.created_at ? e.created_at.split(' ')[0] : ''}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadReceivables() {
+            try {
+                const res = await fetch('/api/finance/receivables');
+                const data = await res.json();
+                const receivables = data.receivables || sampleReceivables;
+                renderReceivables(receivables);
+            } catch (e) {
+                renderReceivables(sampleReceivables);
+            }
+        }
+
+        function renderReceivables(receivables) {
+            const tbody = document.getElementById('receivablesList');
+            const statusNames = { pending: '待付款', partial: '部分付款', paid: '已付款' };
+            const statusColors = { pending: 'bg-yellow-100 text-yellow-700', partial: 'bg-blue-100 text-blue-700', paid: 'bg-green-100 text-green-700' };
+
+            tbody.innerHTML = receivables.map(r => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-800">${r.invoice_id}</td>
+                    <td class="px-4 py-3 text-gray-600">${r.customer_id}</td>
+                    <td class="px-4 py-3 font-medium">${formatCurrency(r.amount)}</td>
+                    <td class="px-4 py-3 text-green-600">${formatCurrency(r.paid_amount)}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded ${statusColors[r.status] || ''}">${statusNames[r.status] || r.status}</span></td>
+                    <td class="px-4 py-3 text-gray-500">${r.due_date ? r.due_date.split(' ')[0] : ''}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadPayables() {
+            try {
+                const res = await fetch('/api/finance/payables');
+                const data = await res.json();
+                const payables = data.payables || samplePayables;
+                renderPayables(payables);
+            } catch (e) {
+                renderPayables(samplePayables);
+            }
+        }
+
+        function renderPayables(payables) {
+            const tbody = document.getElementById('payablesList');
+            const statusNames = { pending: '待付款', partial: '部分付款', paid: '已付款' };
+            const statusColors = { pending: 'bg-yellow-100 text-yellow-700', partial: 'bg-blue-100 text-blue-700', paid: 'bg-green-100 text-green-700' };
+
+            tbody.innerHTML = payables.map(p => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-800">${p.bill_id}</td>
+                    <td class="px-4 py-3 text-gray-600">${p.vendor_id}</td>
+                    <td class="px-4 py-3 font-medium">${formatCurrency(p.amount)}</td>
+                    <td class="px-4 py-3 text-green-600">${formatCurrency(p.paid_amount)}</td>
+                    <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded ${statusColors[p.status] || ''}">${statusNames[p.status] || p.status}</span></td>
+                    <td class="px-4 py-3 text-gray-500">${p.due_date ? p.due_date.split(' ')[0] : ''}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadBudget() {
+            try {
+                const res = await fetch('/api/finance/budget');
+                const data = await res.json();
+                const budget = data.budgets || sampleBudget;
+                renderBudget(budget);
+            } catch (e) {
+                renderBudget(sampleBudget);
+            }
+        }
+
+        function renderBudget(budgets) {
+            const tbody = document.getElementById('budgetList');
+
+            tbody.innerHTML = budgets.map(b => {
+                const usage = b.amount > 0 ? ((b.used_amount / b.amount) * 100).toFixed(1) : 0;
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-gray-800">${b.budget_id}</td>
+                        <td class="px-4 py-3 text-gray-600">${b.department}</td>
+                        <td class="px-4 py-3 text-gray-600">${b.category}</td>
+                        <td class="px-4 py-3 font-medium">${formatCurrency(b.amount)}</td>
+                        <td class="px-4 py-3 text-red-600">${formatCurrency(b.used_amount)}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-blue-500" style="width: ${usage}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-500">${usage}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFinanceSummary();
+            loadLedger();
+            loadReceivables();
+            loadPayables();
+            loadBudget();
+        });
+    </script>
+</body>
+</html>

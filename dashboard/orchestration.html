@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent 编排引擎 - 公司智能体</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .agent-card:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .agent-card { transition: all 0.3s ease; }
+        .load-bar { transition: width 0.5s ease; }
+        .step-card { border-left: 4px solid #3b82f6; }
+        .step-completed { border-left-color: #10b981; background-color: #ecfdf5; }
+        .step-running { border-left-color: #f59e0b; background-color: #fffbeb; animation: pulse-running 2s infinite; }
+        @keyframes pulse-running {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg h-20">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">🎯</span>
+                    <div>
+                        <h1 class="text-lg font-bold">Agent 编排引擎</h1>
+                        <p class="text-sm text-blue-200">Agent Orchestration Engine</p>
+                                    </div>
+            </div>
+                <div class="flex items-center space-x-6">
+                    <!-- 核心功能 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>📊 任务</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">监控看板</a>
+                            <a href="kanban.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">任务看板</a>
+                            <a href="tasks.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">任务管理</a>
+                        </div>
+                    </div>
+                    <!-- 业务系统 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>💼 业务</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="finance.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">💰 财务</a>
+                            <a href="crm.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">🤝 CRM</a>
+                            <a href="bi.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">📈 BI 分析</a>
+                        </div>
+                    </div>
+                    <!-- 平台能力 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>🛠️ 平台</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="workflow.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">工作流</a>
+                            <a href="knowledge.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">知识库</a>
+                            <a href="im.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">IM 通讯</a>
+                            <a href="orchestration.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">Agent 编排</a>
+                        </div>
+                    </div>
+                    <!-- 管理设置 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>⚙️ 管理</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="org.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">组织架构</a>
+                            <a href="rbac.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">权限管理</a>
+                            <a href="skills.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">技能配置</a>
+                            <a href="models.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">模型配置</a>
+                        </div>
+                    </div>
+                    <!-- 单独链接 -->
+                    <a href="meeting.html" class="text-sm hover:text-blue-200 transition">📅 会议</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <!-- 提示 -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <div class="flex items-start space-x-3">
+                <span class="text-2xl">🎯</span>
+                <div>
+                    <h3 class="font-bold text-blue-800">Agent 编排引擎</h3>
+                    <p class="text-sm text-blue-600 mt-1">动态编排 Agent 协作流程，智能负载均衡，自动发现 Agent 能力。形成技术壁垒的核心引擎。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">注册 Agent</p>
+                        <p class="text-2xl font-bold text-blue-600" id="totalAgents">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">🤖</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">活跃 Agent</p>
+                        <p class="text-2xl font-bold text-green-600" id="activeAgents">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">✅</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">编排计划</p>
+                        <p class="text-2xl font-bold text-purple-600" id="totalPlans">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">📋</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-md p-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">平均负载</p>
+                        <p class="text-2xl font-bold text-orange-600" id="avgLoad">0%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-xl">📊</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Agent 注册列表 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-4 border-b flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-800">Agent 注册列表</h2>
+                    <button onclick="loadAgents()" class="text-blue-600 hover:text-blue-700 text-sm">🔄 刷新</button>
+                </div>
+                <div id="agentList" class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto"></div>
+                <div class="p-4 border-t">
+                    <button onclick="openRegisterModal()" class="w-full bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                        ➕ 注册新 Agent
+                    </button>
+                </div>
+            </div>
+
+            <!-- 编排计划 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-4 border-b flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-800">编排计划</h2>
+                    <button onclick="loadPlans()" class="text-blue-600 hover:text-blue-700 text-sm">🔄 刷新</button>
+                </div>
+                <div id="planList" class="divide-y divide-gray-100 max-h-[500px] overflow-y-auto"></div>
+                <div class="p-4 border-t">
+                    <button onclick="openPlanModal()" class="w-full bg-purple-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition">
+                        ➕ 创建编排计划
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 自动分配演示 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden mt-6">
+            <div class="p-4 border-b">
+                <h2 class="text-lg font-bold text-gray-800">🚀 智能任务分配</h2>
+                <p class="text-sm text-gray-500 mt-1">基于负载和技能的自动分配算法</p>
+            </div>
+            <div class="p-4">
+                <div class="flex items-center space-x-4">
+                    <button onclick="testAutoAssign()" class="bg-green-600 text-white px-6 py-3 rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                        🎲 测试自动分配
+                    </button>
+                    <div id="autoAssignResult" class="flex-1"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 注册 Agent 模态框 -->
+    <div id="registerModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">➕ 注册 Agent</h2>
+                <button onclick="closeRegisterModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            </div>
+            <form onsubmit="registerAgent(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Agent ID</label>
+                    <input type="text" id="agentId" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：ceo">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Agent 名称</label>
+                    <input type="text" id="agentName" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：CEO">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">能力标签（逗号分隔）</label>
+                    <input type="text" id="agentCapabilities" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：战略决策，任务分配，审批">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">最大负载</label>
+                    <input type="number" id="agentMaxLoad" value="100" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeRegisterModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">注册</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 创建编排计划模态框 -->
+    <div id="planModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-3xl w-full mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">➕ 创建编排计划</h2>
+                <button onclick="closePlanModal()" class="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            </div>
+            <form onsubmit="createPlan(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">计划 ID</label>
+                    <input type="text" id="planId" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：plan_product_launch">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">计划名称</label>
+                    <input type="text" id="planName" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例如：产品发布编排计划">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Agent 执行序列</label>
+                    <div id="agentSequence" class="space-y-2 mb-2"></div>
+                    <button type="button" onclick="addAgentStep()" class="text-sm text-blue-600 hover:text-blue-700">+ 添加步骤</button>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closePlanModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">创建计划</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let agents = [];
+        let plans = [];
+        let agentSteps = [];
+
+        // 默认 Agent 列表
+        const defaultAgents = [
+            { agent_id: 'ceo', agent_name: 'CEO', status: 'active', capabilities: ['战略决策', '任务分配', '审批'], current_load: 25, max_load: 100 },
+            { agent_id: 'cto', agent_name: 'CTO', status: 'active', capabilities: ['技术架构', '代码审查', '技术决策'], current_load: 50, max_load: 100 },
+            { agent_id: 'cfo', agent_name: 'CFO', status: 'active', capabilities: ['财务分析', '预算审批', '法务'], current_load: 30, max_load: 100 },
+            { agent_id: 'coo', agent_name: 'COO', status: 'active', capabilities: ['运营协调', '人力资源', '进度管理'], current_load: 40, max_load: 100 },
+            { agent_id: 'qa', agent_name: 'QA', status: 'active', capabilities: ['质量检查', '测试', '验收'], current_load: 20, max_load: 100 },
+            { agent_id: 'engineering', agent_name: '工程', status: 'active', capabilities: ['开发', '代码实现', '单元测试'], current_load: 60, max_load: 100 }
+        ];
+
+        // 默认编排计划
+        const defaultPlans = [
+            { id: 1, plan_id: 'plan_product_launch', plan_name: '产品发布编排', status: 'running', agent_sequence: [{agent_id: 'ceo', action: '决策'}, {agent_id: 'cto', action: '技术评审'}, {agent_id: 'qa', action: '质量检查'}], created_at: '2026-03-20 10:00:00' },
+            { id: 2, plan_id: 'plan_budget_review', plan_name: '预算审查编排', status: 'completed', agent_sequence: [{agent_id: 'cfo', action: '初审'}, {agent_id: 'ceo', action: '终审'}], created_at: '2026-03-19 14:00:00', completed_at: '2026-03-19 16:00:00' }
+        ];
+
+        async function loadAgents() {
+            try {
+                const res = await fetch('/api/agents');
+                const data = await res.json();
+                agents = data.agents || defaultAgents;
+                renderAgents();
+                updateStats();
+            } catch (e) {
+                console.error('加载 Agent 失败:', e);
+                agents = defaultAgents;
+                renderAgents();
+                updateStats();
+            }
+        }
+
+        function renderAgents() {
+            const list = document.getElementById('agentList');
+            if (agents.length === 0) {
+                list.innerHTML = '<div class="py-8 text-center text-gray-400 text-sm">暂无注册 Agent</div>';
+                return;
+            }
+
+            list.innerHTML = agents.map(a => {
+                const loadPercent = (a.current_load / a.max_load * 100).toFixed(0);
+                const loadColor = loadPercent < 50 ? 'bg-green-500' : loadPercent < 80 ? 'bg-yellow-500' : 'bg-red-500';
+
+                return `
+                    <div class="p-4 hover:bg-gray-50 agent-card">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-lg font-bold text-gray-800">${a.agent_name}</span>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">${a.agent_id}</span>
+                                ${a.status === 'active' ? '<span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">活跃</span>' : '<span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">离线</span>'}
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 mb-2">
+                            ${(a.capabilities || []).slice(0, 4).map(c => `<span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">${c}</span>`).join('')}
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-gray-500">负载</span>
+                            <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div class="load-bar h-full ${loadColor}" style="width: ${loadPercent}%"></div>
+                            </div>
+                            <span class="text-xs text-gray-600">${a.current_load}/${a.max_load} (${loadPercent}%)</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadPlans() {
+            try {
+                const res = await fetch('/api/orchestration');
+                const data = await res.json();
+                plans = data.plans || defaultPlans;
+                renderPlans();
+                updateStats();
+            } catch (e) {
+                console.error('加载计划失败:', e);
+                plans = defaultPlans;
+                renderPlans();
+                updateStats();
+            }
+        }
+
+        function renderPlans() {
+            const list = document.getElementById('planList');
+            if (plans.length === 0) {
+                list.innerHTML = '<div class="py-8 text-center text-gray-400 text-sm">暂无编排计划</div>';
+                return;
+            }
+
+            list.innerHTML = plans.map(p => `
+                <div class="p-4 hover:bg-gray-50">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-lg font-bold text-gray-800">${p.plan_name}</span>
+                            <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">${p.plan_id}</span>
+                        </div>
+                        ${p.status === 'running' ? '<span class="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded">运行中</span>' :
+                          p.status === 'completed' ? '<span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">已完成</span>' :
+                          '<span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">待执行</span>'}
+                    </div>
+                    <div class="flex items-center space-x-2 mb-2">
+                        ${(p.agent_sequence || []).map(s => `
+                            <span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">${s.agent_id}: ${s.action}</span>
+                        `).join('')}
+                    </div>
+                    <p class="text-xs text-gray-400">创建于：${p.created_at}</p>
+                    ${p.completed_at ? `<p class="text-xs text-gray-400">完成于：${p.completed_at}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function updateStats() {
+            document.getElementById('totalAgents').textContent = agents.length;
+            document.getElementById('activeAgents').textContent = agents.filter(a => a.status === 'active').length;
+            document.getElementById('totalPlans').textContent = plans.length;
+
+            const avgLoad = agents.length > 0
+                ? (agents.reduce((sum, a) => sum + (a.current_load / a.max_load * 100), 0) / agents.length).toFixed(0)
+                : 0;
+            document.getElementById('avgLoad').textContent = avgLoad + '%';
+        }
+
+        function openRegisterModal() {
+            document.getElementById('registerModal').classList.remove('hidden');
+            document.getElementById('registerModal').classList.add('flex');
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('registerModal').classList.add('hidden');
+            document.getElementById('registerModal').classList.remove('flex');
+        }
+
+        async function registerAgent(event) {
+            event.preventDefault();
+            const capabilities = document.getElementById('agentCapabilities').value.split(',').map(c => c.trim()).filter(c => c);
+            const newAgent = {
+                agent_id: document.getElementById('agentId').value,
+                agent_name: document.getElementById('agentName').value,
+                capabilities: capabilities,
+                max_load: parseInt(document.getElementById('agentMaxLoad').value) || 100,
+                status: 'active'
+            };
+
+            try {
+                const res = await fetch('/api/agents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newAgent)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    agents.push(data.agent);
+                    renderAgents();
+                    updateStats();
+                }
+            } catch (e) {
+                agents.push(newAgent);
+                renderAgents();
+                updateStats();
+            }
+
+            closeRegisterModal();
+            event.target.reset();
+        }
+
+        function openPlanModal() {
+            document.getElementById('planModal').classList.remove('hidden');
+            document.getElementById('planModal').classList.add('flex');
+            agentSteps = [];
+            renderAgentSteps();
+        }
+
+        function closePlanModal() {
+            document.getElementById('planModal').classList.add('hidden');
+            document.getElementById('planModal').classList.remove('flex');
+        }
+
+        function addAgentStep() {
+            const agentSelect = agents.map(a => `<option value="${a.agent_id}">${a.agent_name}</option>`).join('');
+            agentSteps.push({ agent_id: agents[0]?.agent_id || 'ceo', action: '' });
+            renderAgentSteps();
+        }
+
+        function renderAgentSteps() {
+            const container = document.getElementById('agentSequence');
+            if (agentSteps.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-400">暂无步骤，点击"添加步骤"添加</p>';
+                return;
+            }
+
+            const agentSelect = agents.map(a => `<option value="${a.agent_id}">${a.agent_name}</option>`).join('');
+
+            container.innerHTML = agentSteps.map((step, i) => `
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-500 w-6">${i + 1}.</span>
+                    <select class="flex-1 px-2 py-1.5 border rounded text-sm" onchange="agentSteps[${i}].agent_id=this.value">
+                        ${agentSelect}
+                    </select>
+                    <input type="text" class="flex-1 px-2 py-1.5 border rounded text-sm" placeholder="动作"
+                           value="${step.action}" onchange="agentSteps[${i}].action=this.value">
+                    <button type="button" onclick="agentSteps.splice(${i},1);renderAgentSteps()" class="text-red-500 hover:text-red-700">×</button>
+                </div>
+            `).join('');
+        }
+
+        async function createPlan(event) {
+            event.preventDefault();
+            const newPlan = {
+                plan_id: document.getElementById('planId').value || `plan_${Date.now()}`,
+                plan_name: document.getElementById('planName').value,
+                agent_sequence: agentSteps,
+                status: 'pending'
+            };
+
+            try {
+                const res = await fetch('/api/orchestration', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newPlan)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    plans.push(data.plan);
+                    renderPlans();
+                    updateStats();
+                }
+            } catch (e) {
+                plans.push({ id: Date.now(), ...newPlan });
+                renderPlans();
+                updateStats();
+            }
+
+            closePlanModal();
+            event.target.reset();
+        }
+
+        async function testAutoAssign() {
+            const resultDiv = document.getElementById('autoAssignResult');
+            resultDiv.innerHTML = '<span class="text-gray-500">分配中...</span>';
+
+            try {
+                const res = await fetch('/api/orchestration/auto-assign');
+                const data = await res.json();
+
+                if (data.assigned_agent) {
+                    resultDiv.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <span class="text-green-600">✅ 分配成功</span>
+                            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded">${data.agent_name} (${data.assigned_agent})</span>
+                            <span class="text-sm text-gray-500">当前负载：${data.current_load}/${data.max_load}</span>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<span class="text-red-500">❌ ${data.reason}</span>`;
+                }
+            } catch (e) {
+                // 使用模拟数据
+                const bestAgent = agents.filter(a => a.status === 'active').sort((a, b) =>
+                    (a.current_load / a.max_load) - (b.current_load / b.max_load)
+                )[0];
+
+                if (bestAgent) {
+                    resultDiv.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <span class="text-green-600">✅ 分配成功</span>
+                            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded">${bestAgent.agent_name} (${bestAgent.agent_id})</span>
+                            <span class="text-sm text-gray-500">当前负载：${bestAgent.current_load}/${bestAgent.max_load}</span>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = '<span class="text-red-500">❌ 无可用 Agent</span>';
+                }
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAgents();
+            loadPlans();
+        });
+    </script>
+</body>
+</html>

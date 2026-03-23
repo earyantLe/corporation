@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM 客户管理 - 公司智能体</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .crm-card:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .crm-card { transition: all 0.3s ease; }
+        .stage-lead { background-color: #fef3c7; color: #92400e; }
+        .stage-qualified { background-color: #dbeafe; color: #1e40af; }
+        .stage-proposal { background-color: #e0e7ff; color: #3730a3; }
+        .stage-negotiation { background-color: #fce7f3; color: #9d174d; }
+        .stage-closed { background-color: #d1fae5; color: #065f46; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航 -->
+    <nav class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-lg h-20">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">🤝</span>
+                    <div>
+                        <h1 class="text-lg font-bold">CRM 客户管理</h1>
+                        <p class="text-sm text-blue-200">Customer Relationship Management</p>
+                                    </div>
+            </div>
+                <div class="flex items-center space-x-6">
+                    <!-- 核心功能 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>📊 任务</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">监控看板</a>
+                            <a href="kanban.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">任务看板</a>
+                            <a href="tasks.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">任务管理</a>
+                        </div>
+                    </div>
+                    <!-- 业务系统 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>💼 业务</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="finance.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">💰 财务</a>
+                            <a href="crm.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">🤝 CRM</a>
+                            <a href="bi.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">📈 BI 分析</a>
+                        </div>
+                    </div>
+                    <!-- 平台能力 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>🛠️ 平台</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="workflow.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">工作流</a>
+                            <a href="knowledge.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">知识库</a>
+                            <a href="im.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">IM 通讯</a>
+                            <a href="orchestration.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">Agent 编排</a>
+                        </div>
+                    </div>
+                    <!-- 管理设置 -->
+                    <div class="relative group">
+                        <button class="text-sm flex items-center space-x-1 hover:text-blue-200 transition">
+                            <span>⚙️ 管理</span>
+                            <span>▾</span>
+                        </button>
+                        <div class="absolute hidden group-hover:block bg-white shadow-lg rounded-lg py-2 top-8 left-0 min-w-[120px] z-50">
+                            <a href="org.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">组织架构</a>
+                            <a href="rbac.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">权限管理</a>
+                            <a href="skills.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">技能配置</a>
+                            <a href="models.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">模型配置</a>
+                        </div>
+                    </div>
+                    <!-- 单独链接 -->
+                    <a href="meeting.html" class="text-sm hover:text-blue-200 transition">📅 会议</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <!-- 销售漏斗摘要 -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+            <div class="crm-card bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-400">
+                <div class="text-sm text-gray-500">线索 Leads</div>
+                <div class="text-3xl font-bold mt-2" id="count-lead">0</div>
+                <div class="text-xs text-gray-400 mt-2">初步接触</div>
+            </div>
+            <div class="crm-card bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-400">
+                <div class="text-sm text-gray-500">合格 Qualified</div>
+                <div class="text-3xl font-bold mt-2" id="count-qualified">0</div>
+                <div class="text-xs text-gray-400 mt-2">需求确认</div>
+            </div>
+            <div class="crm-card bg-white rounded-xl shadow-md p-6 border-l-4 border-indigo-400">
+                <div class="text-sm text-gray-500">方案 Proposal</div>
+                <div class="text-3xl font-bold mt-2" id="count-proposal">0</div>
+                <div class="text-xs text-gray-400 mt-2">方案报价</div>
+            </div>
+            <div class="crm-card bg-white rounded-xl shadow-md p-6 border-l-4 border-pink-400">
+                <div class="text-sm text-gray-500">谈判 Negotiation</div>
+                <div class="text-3xl font-bold mt-2" id="count-negotiation">0</div>
+                <div class="text-xs text-gray-400 mt-2">合同谈判</div>
+            </div>
+            <div class="crm-card bg-white rounded-xl shadow-md p-6 border-l-4 border-green-400">
+                <div class="text-sm text-gray-500">成交 Closed</div>
+                <div class="text-3xl font-bold mt-2" id="count-closed">0</div>
+                <div class="text-xs text-gray-400 mt-2">已签单</div>
+            </div>
+        </div>
+
+        <!-- Tab 切换 -->
+        <div class="bg-white rounded-xl shadow-md">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                    <button onclick="switchTab('customers')" class="tab-btn active py-4 px-1 border-b-2 font-medium text-sm" data-tab="customers">
+                        📇 客户档案
+                    </button>
+                    <button onclick="switchTab('opportunities')" class="tab-btn py-4 px-1 border-b-2 font-medium text-sm" data-tab="opportunities">
+                        🎯 商机管理
+                    </button>
+                    <button onclick="switchTab('contracts')" class="tab-btn py-4 px-1 border-b-2 font-medium text-sm" data-tab="contracts">
+                        📄 合同管理
+                    </button>
+                </nav>
+            </div>
+
+            <!-- 客户档案 -->
+            <div id="tab-customers" class="tab-content p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">客户列表</h2>
+                    <button onclick="showAddCustomerModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        + 新增客户
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">客户 ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">客户名称</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">类型</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">行业</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">联系人</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customers-table" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 商机管理 -->
+            <div id="tab-opportunities" class="tab-content p-6 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">商机列表</h2>
+                    <button onclick="showAddOpportunityModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        + 新增商机
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">商机 ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">标题</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">客户</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">金额</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">阶段</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">成功率</th>
+                            </tr>
+                        </thead>
+                        <tbody id="opportunities-table" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 合同管理 -->
+            <div id="tab-contracts" class="tab-content p-6 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">合同列表</h2>
+                    <button onclick="showAddContractModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                        + 新增合同
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">合同 ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">合同名称</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">客户</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">金额</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">有效期</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contracts-table" class="bg-white divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 新增客户弹窗 -->
+    <div id="add-customer-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold mb-4">新增客户</h3>
+            <form onsubmit="addCustomer(event)" class="space-y-4">
+                <input type="text" name="customer_name" placeholder="客户名称" required class="w-full border rounded-lg px-4 py-2">
+                <select name="customer_type" class="w-full border rounded-lg px-4 py-2">
+                    <option value="enterprise">企业客户</option>
+                    <option value="smb">中小企业</option>
+                    <option value="individual">个人客户</option>
+                </select>
+                <input type="text" name="industry" placeholder="行业" class="w-full border rounded-lg px-4 py-2">
+                <input type="text" name="contact_person" placeholder="联系人" class="w-full border rounded-lg px-4 py-2">
+                <input type="email" name="contact_email" placeholder="邮箱" class="w-full border rounded-lg px-4 py-2">
+                <input type="tel" name="contact_phone" placeholder="电话" class="w-full border rounded-lg px-4 py-2">
+                <textarea name="address" placeholder="地址" class="w-full border rounded-lg px-4 py-2"></textarea>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeModal('add-customer-modal')" class="px-4 py-2 text-gray-600 hover:text-gray-800">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Tab 切换
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('border-blue-600', 'text-blue-600');
+                el.classList.add('border-transparent', 'text-gray-500');
+            });
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+            btn.classList.remove('border-transparent', 'text-gray-500');
+            btn.classList.add('border-blue-600', 'text-blue-600');
+        }
+
+        // 格式化金额
+        function formatCurrency(amount) {
+            return '¥' + parseFloat(amount).toLocaleString('zh-CN');
+        }
+
+        // 获取阶段样式
+        function getStageClass(stage) {
+            const classes = {
+                'lead': 'stage-lead',
+                'qualified': 'stage-qualified',
+                'proposal': 'stage-proposal',
+                'negotiation': 'stage-negotiation',
+                'closed': 'stage-closed'
+            };
+            return classes[stage] || 'stage-lead';
+        }
+
+        // 获取阶段中文
+        function getStageLabel(stage) {
+            const labels = {
+                'lead': '线索',
+                'qualified': '合格',
+                'proposal': '方案',
+                'negotiation': '谈判',
+                'closed': '成交'
+            };
+            return labels[stage] || stage;
+        }
+
+        // 加载数据
+        async function loadData() {
+            try {
+                const [customers, opportunities, contracts] = await Promise.all([
+                    fetch('/api/crm/customers').then(r => r.json()),
+                    fetch('/api/crm/opportunities').then(r => r.json()),
+                    fetch('/api/crm/contracts').then(r => r.json())
+                ]);
+
+                renderCustomers(customers.customers || []);
+                renderOpportunities(opportunities.opportunities || []);
+                renderContracts(contracts.contracts || []);
+                updateFunnelStats(opportunities.opportunities || []);
+            } catch (e) {
+                console.error('加载数据失败:', e);
+            }
+        }
+
+        // 渲染客户表格
+        function renderCustomers(customers) {
+            const tbody = document.getElementById('customers-table');
+            tbody.innerHTML = customers.length === 0 ?
+                '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">暂无客户数据</td></tr>' :
+                customers.map(c => `
+                    <tr>
+                        <td class="px-6 py-4 text-sm text-gray-900">${c.customer_id}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${c.customer_name}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${c.customer_type === 'enterprise' ? '企业' : c.customer_type === 'smb' ? '中小企业' : '个人'}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${c.industry || '-'}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${c.contact_person || '-'}</td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 text-xs rounded-full ${c.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">${c.status === 'active' ? '活跃' : '非活跃'}</span></td>
+                    </tr>
+                `).join('');
+        }
+
+        // 渲染商机表格
+        function renderOpportunities(opportunities) {
+            const tbody = document.getElementById('opportunities-table');
+            tbody.innerHTML = opportunities.length === 0 ?
+                '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">暂无商机数据</td></tr>' :
+                opportunities.map(o => `
+                    <tr>
+                        <td class="px-6 py-4 text-sm text-gray-900">${o.opp_id}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${o.title}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${o.customer_id}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">${formatCurrency(o.amount)}</td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 text-xs rounded-full ${getStageClass(o.stage)}">${getStageLabel(o.stage)}</span></td>
+                        <td class="px-6 py-4 text-sm text-gray-900">${o.probability}%</td>
+                    </tr>
+                `).join('');
+        }
+
+        // 渲染合同表格
+        function renderContracts(contracts) {
+            const tbody = document.getElementById('contracts-table');
+            tbody.innerHTML = contracts.length === 0 ?
+                '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">暂无合同数据</td></tr>' :
+                contracts.map(c => `
+                    <tr>
+                        <td class="px-6 py-4 text-sm text-gray-900">${c.contract_id}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${c.title}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${c.customer_id}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">${formatCurrency(c.amount)}</td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 text-xs rounded-full ${c.status === 'active' ? 'bg-green-100 text-green-800' : c.status === 'draft' ? 'bg-gray-100 text-gray-800' : 'bg-blue-100 text-blue-800'}">${c.status === 'active' ? '生效中' : c.status === 'draft' ? '草稿' : '已完成'}</span></td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${c.start_date ? c.start_date.split('T')[0] : '-'} ~ ${c.end_date ? c.end_date.split('T')[0] : '-'}</td>
+                    </tr>
+                `).join('');
+        }
+
+        // 更新漏斗统计
+        function updateFunnelStats(opportunities) {
+            const stats = { lead: 0, qualified: 0, proposal: 0, negotiation: 0, closed: 0 };
+            opportunities.forEach(o => {
+                stats[o.stage] = (stats[o.stage] || 0) + 1;
+            });
+            document.getElementById('count-lead').textContent = stats.lead;
+            document.getElementById('count-qualified').textContent = stats.qualified;
+            document.getElementById('count-proposal').textContent = stats.proposal;
+            document.getElementById('count-negotiation').textContent = stats.negotiation;
+            document.getElementById('count-closed').textContent = stats.closed;
+        }
+
+        // 弹窗控制
+        function showAddCustomerModal() {
+            document.getElementById('add-customer-modal').classList.remove('hidden');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // 添加客户
+        async function addCustomer(e) {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                customer_name: form.customer_name.value,
+                customer_type: form.customer_type.value,
+                industry: form.industry.value,
+                contact_person: form.contact_person.value,
+                contact_email: form.contact_email.value,
+                contact_phone: form.contact_phone.value,
+                address: form.address.value
+            };
+            try {
+                await fetch('/api/crm/customers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                closeModal('add-customer-modal');
+                loadData();
+            } catch (e) {
+                console.error('添加失败:', e);
+            }
+        }
+
+        // 初始化
+        loadData();
+    </script>
+</body>
+</html>

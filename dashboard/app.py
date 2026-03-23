@@ -186,6 +186,429 @@ def init_db():
         )
     """)
 
+    # 工作流定义表（工作流引擎）
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS workflows (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workflow_id TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            version TEXT DEFAULT '1.0.0',
+            definition TEXT NOT NULL,
+            status TEXT DEFAULT 'draft',
+            created_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # 工作流节点表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS workflow_nodes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workflow_id INTEGER NOT NULL,
+            node_id TEXT NOT NULL,
+            node_type TEXT NOT NULL,
+            node_name TEXT NOT NULL,
+            config TEXT,
+            position_x INTEGER DEFAULT 0,
+            position_y INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (workflow_id) REFERENCES workflows(id)
+        )
+    """)
+
+    # 工作流转换表（节点间的连接）
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS workflow_transitions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workflow_id INTEGER NOT NULL,
+            from_node_id TEXT NOT NULL,
+            to_node_id TEXT NOT NULL,
+            condition TEXT,
+            label TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (workflow_id) REFERENCES workflows(id)
+        )
+    """)
+
+    # 工作流实例表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS workflow_instances (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            workflow_id INTEGER NOT NULL,
+            task_id INTEGER,
+            current_node_id TEXT,
+            status TEXT DEFAULT 'running',
+            context TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP,
+            FOREIGN KEY (workflow_id) REFERENCES workflows(id),
+            FOREIGN KEY (task_id) REFERENCES tasks(id)
+        )
+    """)
+
+    # 工作流执行日志表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS workflow_execution_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            instance_id INTEGER NOT NULL,
+            node_id TEXT NOT NULL,
+            action TEXT NOT NULL,
+            result TEXT,
+            error TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (instance_id) REFERENCES workflow_instances(id)
+        )
+    """)
+
+    # 知识库文档表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS documents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            doc_id TEXT UNIQUE NOT NULL,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            category TEXT,
+            tags TEXT,
+            author TEXT,
+            version TEXT DEFAULT '1.0.0',
+            parent_id INTEGER,
+            status TEXT DEFAULT 'published',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # 文档版本表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS document_versions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            document_id INTEGER NOT NULL,
+            version TEXT NOT NULL,
+            content TEXT NOT NULL,
+            change_summary TEXT,
+            created_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (document_id) REFERENCES documents(id)
+        )
+    """)
+
+    # IM 消息表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id TEXT NOT NULL,
+            sender_id TEXT NOT NULL,
+            receiver_id TEXT NOT NULL,
+            content TEXT NOT NULL,
+            message_type TEXT DEFAULT 'text',
+            is_read BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # IM 会话表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id TEXT UNIQUE NOT NULL,
+            participant_ids TEXT NOT NULL,
+            last_message_at TIMESTAMP,
+            last_message_content TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # 未读消息计数表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS unread_counts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            conversation_id TEXT NOT NULL,
+            count INTEGER DEFAULT 0,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, conversation_id)
+        )
+    """)
+
+    # Agent 编排引擎表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_registry (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_id TEXT UNIQUE NOT NULL,
+            agent_name TEXT NOT NULL,
+            status TEXT DEFAULT 'active',
+            capabilities TEXT,
+            current_load INTEGER DEFAULT 0,
+            max_load INTEGER DEFAULT 100,
+            last_heartbeat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS orchestration_plans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plan_id TEXT UNIQUE NOT NULL,
+            task_id INTEGER,
+            plan_name TEXT NOT NULL,
+            agent_sequence TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            created_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP,
+            FOREIGN KEY (task_id) REFERENCES tasks(id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS orchestration_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plan_id INTEGER NOT NULL,
+            agent_id TEXT NOT NULL,
+            step_number INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            result TEXT,
+            status TEXT DEFAULT 'pending',
+            started_at TIMESTAMP,
+            completed_at TIMESTAMP,
+            FOREIGN KEY (plan_id) REFERENCES orchestration_plans(id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_skills (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_id TEXT NOT NULL,
+            skill_id TEXT NOT NULL,
+            proficiency INTEGER DEFAULT 50,
+            usage_count INTEGER DEFAULT 0,
+            UNIQUE(agent_id, skill_id)
+        )
+    """)
+
+    # RBAC 权限系统表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS roles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            role_id TEXT UNIQUE NOT NULL,
+            role_name TEXT NOT NULL,
+            description TEXT,
+            permissions TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS permissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            permission_id TEXT UNIQUE NOT NULL,
+            permission_name TEXT NOT NULL,
+            resource_type TEXT NOT NULL,
+            action TEXT NOT NULL,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_roles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            role_id TEXT NOT NULL,
+            granted_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, role_id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS data_permissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            role_id TEXT NOT NULL,
+            resource_type TEXT NOT NULL,
+            resource_id TEXT,
+            access_level TEXT DEFAULT 'read',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(role_id, resource_type, resource_id)
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS permission_audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            action TEXT NOT NULL,
+            resource_type TEXT,
+            resource_id TEXT,
+            result TEXT,
+            ip_address TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    conn.commit()
+
+    # 财务模块表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS finance_ledger (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entry_id TEXT UNIQUE NOT NULL,
+            entry_type TEXT NOT NULL,
+            account_code TEXT NOT NULL,
+            debit REAL DEFAULT 0,
+            credit REAL DEFAULT 0,
+            balance REAL DEFAULT 0,
+            description TEXT,
+            related_to TEXT,
+            created_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS finance_accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_code TEXT UNIQUE NOT NULL,
+            account_name TEXT NOT NULL,
+            account_type TEXT NOT NULL,
+            parent_code TEXT,
+            balance REAL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS finance_receivables (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            invoice_id TEXT NOT NULL,
+            customer_id TEXT NOT NULL,
+            amount REAL NOT NULL,
+            paid_amount REAL DEFAULT 0,
+            status TEXT DEFAULT 'pending',
+            due_date TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS finance_payables (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            bill_id TEXT NOT NULL,
+            vendor_id TEXT NOT NULL,
+            amount REAL NOT NULL,
+            paid_amount REAL DEFAULT 0,
+            status TEXT DEFAULT 'pending',
+            due_date TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS finance_budget (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            budget_id TEXT UNIQUE NOT NULL,
+            department TEXT NOT NULL,
+            category TEXT NOT NULL,
+            amount REAL NOT NULL,
+            used_amount REAL DEFAULT 0,
+            start_date TIMESTAMP,
+            end_date TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS finance_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            report_id TEXT UNIQUE NOT NULL,
+            report_type TEXT NOT NULL,
+            period TEXT NOT NULL,
+            data TEXT NOT NULL,
+            created_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    conn.commit()
+
+    # CRM 模块表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS crm_customers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            customer_id TEXT UNIQUE NOT NULL,
+            customer_name TEXT NOT NULL,
+            customer_type TEXT DEFAULT 'enterprise',
+            industry TEXT,
+            contact_person TEXT,
+            contact_email TEXT,
+            contact_phone TEXT,
+            address TEXT,
+            status TEXT DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS crm_opportunities (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            opp_id TEXT UNIQUE NOT NULL,
+            customer_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            amount REAL DEFAULT 0,
+            stage TEXT DEFAULT 'lead',
+            probability INTEGER DEFAULT 10,
+            expected_close_date TIMESTAMP,
+            owner TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS crm_contracts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            contract_id TEXT UNIQUE NOT NULL,
+            customer_id TEXT NOT NULL,
+            opp_id TEXT,
+            title TEXT NOT NULL,
+            amount REAL NOT NULL,
+            status TEXT DEFAULT 'draft',
+            start_date TIMESTAMP,
+            end_date TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # BI 分析模块表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bi_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            report_id TEXT UNIQUE NOT NULL,
+            report_name TEXT NOT NULL,
+            report_type TEXT DEFAULT 'custom',
+            config TEXT,
+            created_by TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # 通知中心表
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL DEFAULT 'system',
+            title TEXT NOT NULL,
+            message TEXT,
+            icon TEXT DEFAULT '📬',
+            type TEXT DEFAULT 'system',
+            read BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     conn.commit()
 
     # 初始化示例数据（如果是新数据库）
@@ -245,6 +668,10 @@ class APIHandler(SimpleHTTPRequestHandler):
         if path == "/api/stats":
             self.send_json(self.get_stats())
         elif path == "/api/agents":
+            # 返回 Agent 注册列表（编排引擎）
+            self.send_json(self.get_agent_registry())
+        elif path == "/api/agents/list":
+            # 返回原始 Agent 列表（用于前端显示）
             self.send_json({"agents": AGENTS})
         elif path == "/api/health":
             self.send_json({"status": "healthy", "timestamp": datetime.now().isoformat()})
@@ -307,6 +734,157 @@ class APIHandler(SimpleHTTPRequestHandler):
             action = data.get("action")
             result = self.intervene_task(task_id, action, data)
             self.send_json({"success": True, "result": result})
+        # 工作流引擎 API
+        elif path == "/api/workflows":
+            self.send_json(self.get_workflows())
+        elif path.startswith("/api/workflows/"):
+            parts = path.split("/")
+            workflow_id = parts[3]
+            if len(parts) == 4:
+                if workflow_id.isdigit():
+                    self.send_json(self.get_workflow(int(workflow_id)))
+                else:
+                    self.send_error(404)
+            elif parts[4] == "nodes":
+                self.send_json(self.get_workflow_nodes(int(workflow_id)))
+            elif parts[4] == "instances":
+                self.send_json(self.get_workflow_instances(int(workflow_id)))
+            elif parts[4] == "execute":
+                self.send_json(self.execute_workflow(int(workflow_id)))
+            else:
+                self.send_error(404)
+        elif path == "/api/workflow-instances":
+            status = query.get("status", [None])[0]
+            self.send_json(self.get_workflow_instances_all(status))
+        # 知识库 API
+        elif path == "/api/documents":
+            category = query.get("category", [None])[0]
+            self.send_json(self.get_documents(category))
+        elif path.startswith("/api/documents/"):
+            parts = path.split("/")
+            doc_id = parts[3]
+            if len(parts) == 4:
+                if doc_id.isdigit():
+                    self.send_json(self.get_document(int(doc_id)))
+                else:
+                    self.send_error(404)
+            elif parts[4] == "versions":
+                self.send_json(self.get_document_versions(int(doc_id)))
+            else:
+                self.send_error(404)
+        # IM API
+        elif path == "/api/conversations":
+            user_id = query.get("user_id", [None])[0]
+            self.send_json(self.get_conversations(user_id))
+        elif path.startswith("/api/conversations/"):
+            parts = path.split("/")
+            conv_id = parts[3]
+            if len(parts) == 4:
+                self.send_json(self.get_conversation(conv_id))
+            elif len(parts) == 5 and parts[4] == "messages":
+                self.send_json(self.get_messages(conv_id))
+            else:
+                self.send_error(404)
+        elif path == "/api/messages":
+            self.send_json(self.get_all_messages())
+        elif path.startswith("/api/messages/"):
+            parts = path.split("/")
+            if len(parts) == 5 and parts[4] == "unread":
+                user_id = parts[3]
+                self.send_json(self.get_unread_count(user_id))
+            else:
+                self.send_error(404)
+        # Agent 编排引擎 API
+        elif path == "/api/orchestration/auto-assign":
+            task_id = query.get("task_id", [None])[0]
+            self.send_json(self.auto_assign_agents(int(task_id) if task_id else None))
+        elif path == "/api/agents":
+            self.send_json(self.get_agent_registry())
+        elif path.startswith("/api/agents/"):
+            parts = path.split("/")
+            agent_id = parts[3]
+            if len(parts) == 4:
+                self.send_json(self.get_agent(agent_id))
+            elif len(parts) == 5 and parts[4] == "skills":
+                self.send_json(self.get_agent_skills(agent_id))
+            else:
+                self.send_error(404)
+        elif path == "/api/orchestration":
+            self.send_json(self.get_orchestration_plans())
+        elif path.startswith("/api/orchestration/"):
+            parts = path.split("/")
+            if len(parts) == 4:
+                plan_id = parts[3]
+                if plan_id.isdigit():
+                    self.send_json(self.get_orchestration_plan(int(plan_id)))
+                else:
+                    self.send_error(404)
+            elif len(parts) == 5 and parts[4] == "history":
+                plan_id = parts[3]
+                self.send_json(self.get_orchestration_history(int(plan_id)))
+            elif len(parts) == 5 and parts[4] == "execute":
+                plan_id = parts[3]
+                self.execute_orchestration_plan(int(plan_id))
+                self.send_json({"success": True})
+            else:
+                self.send_error(404)
+        # RBAC 权限系统 API
+        elif path == "/api/roles":
+            self.send_json(self.get_roles())
+        elif path.startswith("/api/roles/"):
+            parts = path.split("/")
+            role_id = parts[3]
+            if len(parts) == 4:
+                self.send_json(self.get_role(role_id))
+            elif len(parts) == 5 and parts[4] == "permissions":
+                self.send_json(self.get_role_permissions(role_id))
+            else:
+                self.send_error(404)
+        elif path == "/api/permissions":
+            self.send_json(self.get_permissions())
+        elif path == "/api/user-roles":
+            user_id = query.get("user_id", [None])[0]
+            self.send_json(self.get_user_roles(user_id))
+        elif path == "/api/check-permission":
+            user_id = query.get("user_id", [None])[0]
+            resource = query.get("resource", [None])[0]
+            action = query.get("action", [None])[0]
+            self.send_json(self.check_permission(user_id, resource, action))
+        # CRM 模块 API
+        elif path == "/api/crm/customers":
+            self.send_json(self.get_crm_customers())
+        elif path == "/api/crm/opportunities":
+            self.send_json(self.get_crm_opportunities())
+        elif path == "/api/crm/contracts":
+            self.send_json(self.get_crm_contracts())
+        # BI 分析模块 API
+        elif path == "/api/bi/reports":
+            self.send_json(self.get_bi_reports())
+        elif path == "/api/bi/dashboard":
+            self.send_json(self.get_bi_dashboard())
+        # 通知中心 API
+        elif path == "/api/notifications":
+            self.send_json(self.get_notifications())
+        elif path == "/api/notifications/read":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            self.send_json(self.mark_notification_read(data))
+        # 财务模块 API
+        elif path == "/api/finance/ledger":
+            self.send_json(self.get_finance_ledger())
+        elif path == "/api/finance/accounts":
+            self.send_json(self.get_finance_accounts())
+        elif path == "/api/finance/receivables":
+            self.send_json(self.get_finance_receivables())
+        elif path == "/api/finance/payables":
+            self.send_json(self.get_finance_payables())
+        elif path == "/api/finance/budget":
+            self.send_json(self.get_finance_budget())
+        elif path == "/api/finance/reports":
+            self.send_json(self.get_finance_reports())
+        elif path == "/api/finance/summary":
+            self.send_json(self.get_finance_summary())
         else:
             # 静态文件服务 - 设置正确的目录
             if self.path == "/" or self.path == "/index.html":
@@ -388,6 +966,168 @@ class APIHandler(SimpleHTTPRequestHandler):
             data = json.loads(body)
             policy = self.create_policy(data)
             self.send_json({"success": True, "policy": policy})
+        # 工作流引擎 API
+        elif self.path == "/api/workflows":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            workflow = self.create_workflow(data)
+            self.send_json({"success": True, "workflow": workflow})
+        elif self.path.startswith("/api/workflows/"):
+            parts = self.path.split("/")
+            workflow_id = parts[3]
+            if workflow_id.isdigit():
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode()
+                data = json.loads(body)
+                workflow = self.update_workflow(int(workflow_id), data)
+                self.send_json({"success": True, "workflow": workflow})
+            else:
+                self.send_error(404)
+        # 知识库 API
+        elif self.path == "/api/documents":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            doc = self.create_document(data)
+            self.send_json({"success": True, "document": doc})
+        elif self.path.startswith("/api/documents/"):
+            parts = self.path.split("/")
+            doc_id = parts[3]
+            if doc_id.isdigit() and len(parts) == 4:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode()
+                data = json.loads(body)
+                doc = self.update_document(int(doc_id), data)
+                self.send_json({"success": True, "document": doc})
+            else:
+                self.send_error(404)
+        # IM API
+        elif self.path == "/api/messages":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            msg = self.send_message(data)
+            self.send_json({"success": True, "message": msg})
+        elif self.path.startswith("/api/messages/"):
+            parts = self.path.split("/")
+            if len(parts) == 5 and parts[4] == "read":
+                msg_id = parts[3]
+                self.mark_message_read(int(msg_id))
+                self.send_json({"success": True})
+            else:
+                self.send_error(404)
+        elif self.path == "/api/conversations":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            conv = self.create_conversation(data)
+            self.send_json({"success": True, "conversation": conv})
+        # Agent 编排引擎 API
+        elif self.path == "/api/orchestration":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            plan = self.create_orchestration_plan(data)
+            self.send_json({"success": True, "plan": plan})
+        elif self.path.startswith("/api/orchestration/"):
+            parts = self.path.split("/")
+            if len(parts) == 5 and parts[4] == "execute":
+                plan_id = parts[3]
+                if plan_id.isdigit():
+                    self.execute_orchestration_plan(int(plan_id))
+                    self.send_json({"success": True})
+                else:
+                    self.send_error(404)
+            else:
+                self.send_error(404)
+        elif self.path == "/api/agents":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            agent = self.register_agent(data)
+            self.send_json({"success": True, "agent": agent})
+        # RBAC 权限系统 API
+        elif self.path == "/api/roles":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            role = self.create_role(data)
+            self.send_json({"success": True, "role": role})
+        elif self.path == "/api/permissions":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            perm = self.create_permission(data)
+            self.send_json({"success": True, "permission": perm})
+        elif self.path.startswith("/api/roles/"):
+            parts = self.path.split("/")
+            role_id = parts[3]
+            if len(parts) == 4:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode()
+                data = json.loads(body)
+                role = self.update_role(role_id, data)
+                self.send_json({"success": True, "role": role})
+            elif len(parts) == 5 and parts[4] == "permissions":
+                content_length = int(self.headers.get("Content-Length", 0))
+                body = self.rfile.read(content_length).decode()
+                data = json.loads(body)
+                result = self.set_role_permissions(role_id, data)
+                self.send_json({"success": True, "result": result})
+            else:
+                self.send_error(404)
+        elif self.path == "/api/user-roles":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            result = self.assign_user_role(data)
+            self.send_json({"success": True, "result": result})
+        # CRM 模块 API
+        elif self.path == "/api/crm/customers":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            customer = self.create_crm_customer(data)
+            self.send_json({"success": True, "customer": customer})
+        elif self.path == "/api/crm/opportunities":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            opp = self.create_crm_opportunity(data)
+            self.send_json({"success": True, "opportunity": opp})
+        elif self.path == "/api/crm/contracts":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            contract = self.create_crm_contract(data)
+            self.send_json({"success": True, "contract": contract})
+        # BI 分析模块 API
+        elif self.path == "/api/bi/reports":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            report = self.create_bi_report(data)
+            self.send_json({"success": True, "report": report})
+        # 财务模块 API
+        elif self.path.startswith("/api/finance/"):
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length).decode()
+            data = json.loads(body)
+            if "ledger" in self.path:
+                result = self.create_finance_ledger_entry(data)
+            elif "receivables" in self.path:
+                result = self.create_receivable(data)
+            elif "payables" in self.path:
+                result = self.create_payable(data)
+            elif "budget" in self.path:
+                result = self.create_budget(data)
+            elif "reports" in self.path:
+                result = self.create_finance_report(data)
+            else:
+                self.send_error(404)
+                return
+            self.send_json({"success": True, "result": result})
         else:
             self.send_error(404)
 
@@ -416,6 +1156,14 @@ class APIHandler(SimpleHTTPRequestHandler):
         elif self.path.startswith("/api/policies/"):
             policy_id = int(self.path.split("/")[-1])
             self.delete_policy(policy_id)
+            self.send_json({"success": True})
+        elif self.path.startswith("/api/workflows/"):
+            workflow_id = int(self.path.split("/")[-1])
+            self.delete_workflow(workflow_id)
+            self.send_json({"success": True})
+        elif self.path.startswith("/api/documents/"):
+            doc_id = int(self.path.split("/")[-1])
+            self.delete_document(doc_id)
             self.send_json({"success": True})
         else:
             self.send_error(404)
@@ -1066,6 +1814,224 @@ class APIHandler(SimpleHTTPRequestHandler):
         conn.commit()
         conn.close()
 
+    # ========== 工作流引擎方法 ==========
+
+    def get_workflows(self):
+        """获取工作流列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM workflows ORDER BY created_at DESC")
+        workflows = []
+        for row in cursor.fetchall():
+            workflows.append({
+                "id": row["id"],
+                "workflow_id": row["workflow_id"],
+                "name": row["name"],
+                "description": row["description"],
+                "version": row["version"],
+                "status": row["status"],
+                "created_by": row["created_by"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"]
+            })
+        conn.close()
+        return {"workflows": workflows}
+
+    def get_workflow(self, workflow_id):
+        """获取单个工作流"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM workflows WHERE id = ?", (workflow_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return {
+                "id": row["id"],
+                "workflow_id": row["workflow_id"],
+                "name": row["name"],
+                "description": row["description"],
+                "version": row["version"],
+                "definition": json.loads(row["definition"]) if row["definition"] else {},
+                "status": row["status"],
+                "created_by": row["created_by"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"]
+            }
+        return None
+
+    def create_workflow(self, data):
+        """创建工作流"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        workflow_id = data.get("workflow_id", f"wf_{datetime.now().strftime('%Y%m%d%H%M%S')}")
+        definition = data.get("definition", {})
+
+        cursor.execute(
+            "INSERT INTO workflows (workflow_id, name, description, version, definition, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (workflow_id, data.get("name"), data.get("description"), data.get("version", "1.0.0"),
+             json.dumps(definition, ensure_ascii=False), data.get("status", "draft"), data.get("created_by", "system"))
+        )
+        workflow_db_id = cursor.lastrowid
+
+        # 如果定义中包含节点，保存节点
+        if "nodes" in definition:
+            for node in definition["nodes"]:
+                cursor.execute(
+                    "INSERT INTO workflow_nodes (workflow_id, node_id, node_type, node_name, config, position_x, position_y) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (workflow_db_id, node.get("id"), node.get("type"), node.get("name"),
+                     json.dumps(node.get("config", {}), ensure_ascii=False), node.get("x", 0), node.get("y", 0))
+                )
+
+        # 如果定义中包含转换，保存转换
+        if "transitions" in definition:
+            for trans in definition["transitions"]:
+                cursor.execute(
+                    "INSERT INTO workflow_transitions (workflow_id, from_node_id, to_node_id, condition, label) VALUES (?, ?, ?, ?, ?)",
+                    (workflow_db_id, trans.get("from"), trans.get("to"), trans.get("condition"), trans.get("label"))
+                )
+
+        conn.commit()
+        conn.close()
+        return {"id": workflow_db_id, "workflow_id": workflow_id, **data}
+
+    def update_workflow(self, workflow_id, data):
+        """更新工作流"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "UPDATE workflows SET name = ?, description = ?, version = ?, definition = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (data.get("name"), data.get("description"), data.get("version"),
+             json.dumps(data.get("definition", {}), ensure_ascii=False), data.get("status"), workflow_id)
+        )
+        conn.commit()
+        conn.close()
+        return {"id": workflow_id, **data}
+
+    def delete_workflow(self, workflow_id):
+        """删除工作流"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM workflow_nodes WHERE workflow_id = ?", (workflow_id,))
+        cursor.execute("DELETE FROM workflow_transitions WHERE workflow_id = ?", (workflow_id,))
+        cursor.execute("DELETE FROM workflow_instances WHERE workflow_id = ?", (workflow_id,))
+        cursor.execute("DELETE FROM workflows WHERE id = ?", (workflow_id,))
+        conn.commit()
+        conn.close()
+
+    def get_workflow_nodes(self, workflow_id):
+        """获取工作流节点"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM workflow_nodes WHERE workflow_id = ?", (workflow_id,))
+        nodes = []
+        for row in cursor.fetchall():
+            nodes.append({
+                "id": row["id"],
+                "node_id": row["node_id"],
+                "node_type": row["node_type"],
+                "node_name": row["node_name"],
+                "config": json.loads(row["config"]) if row["config"] else {},
+                "position_x": row["position_x"],
+                "position_y": row["position_y"]
+            })
+        conn.close()
+        return {"nodes": nodes}
+
+    def get_workflow_instances(self, workflow_id):
+        """获取工作流实例"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM workflow_instances WHERE workflow_id = ? ORDER BY created_at DESC", (workflow_id,))
+        instances = []
+        for row in cursor.fetchall():
+            instances.append({
+                "id": row["id"],
+                "workflow_id": row["workflow_id"],
+                "task_id": row["task_id"],
+                "current_node_id": row["current_node_id"],
+                "status": row["status"],
+                "context": json.loads(row["context"]) if row["context"] else {},
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+                "completed_at": row["completed_at"]
+            })
+        conn.close()
+        return {"instances": instances}
+
+    def get_workflow_instances_all(self, status=None):
+        """获取所有工作流实例"""
+        conn = get_db()
+        cursor = conn.cursor()
+        if status:
+            cursor.execute("SELECT * FROM workflow_instances WHERE status = ? ORDER BY created_at DESC", (status,))
+        else:
+            cursor.execute("SELECT * FROM workflow_instances ORDER BY created_at DESC")
+        instances = []
+        for row in cursor.fetchall():
+            instances.append({
+                "id": row["id"],
+                "workflow_id": row["workflow_id"],
+                "task_id": row["task_id"],
+                "current_node_id": row["current_node_id"],
+                "status": row["status"],
+                "context": json.loads(row["context"]) if row["context"] else {},
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+                "completed_at": row["completed_at"]
+            })
+        conn.close()
+        return {"instances": instances}
+
+    def execute_workflow(self, workflow_id):
+        """执行工作流"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # 获取工作流定义
+        cursor.execute("SELECT * FROM workflows WHERE id = ?", (workflow_id,))
+        workflow = cursor.fetchone()
+
+        if not workflow:
+            conn.close()
+            return {"error": "工作流不存在"}
+
+        # 创建工作流实例
+        cursor.execute(
+            "INSERT INTO workflow_instances (workflow_id, status, context) VALUES (?, ?, ?)",
+            (workflow_id, "running", "{}")
+        )
+        instance_id = cursor.lastrowid
+
+        # 获取第一个节点
+        cursor.execute("SELECT * FROM workflow_nodes WHERE workflow_id = ? ORDER BY id LIMIT 1", (workflow_id,))
+        first_node = cursor.fetchone()
+
+        if first_node:
+            cursor.execute(
+                "UPDATE workflow_instances SET current_node_id = ? WHERE id = ?",
+                (first_node["node_id"], instance_id)
+            )
+
+            # 记录执行日志
+            cursor.execute(
+                "INSERT INTO workflow_execution_logs (instance_id, node_id, action, result) VALUES (?, ?, ?, ?)",
+                (instance_id, first_node["node_id"], "started", f"工作流 {workflow['name']} 开始执行")
+            )
+
+        conn.commit()
+        conn.close()
+
+        return {
+            "success": True,
+            "instance_id": instance_id,
+            "workflow_id": workflow_id,
+            "current_node": first_node["node_id"] if first_node else None
+        }
+
+    # ==========  конец 工作流引擎方法 ==========
+
     # 任务干预
     def intervene_task(self, task_id, action, data):
         """任务干预：暂停/恢复/转交/优先级调整"""
@@ -1122,6 +2088,1239 @@ class APIHandler(SimpleHTTPRequestHandler):
         asyncio.run(self.broadcast_update("task_intervened", result))
 
         return result
+
+    # ========== 知识库方法 ==========
+
+    def get_documents(self, category=None):
+        """获取文档列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        if category:
+            cursor.execute("SELECT * FROM documents WHERE category = ? ORDER BY created_at DESC", (category,))
+        else:
+            cursor.execute("SELECT * FROM documents ORDER BY created_at DESC")
+        docs = []
+        for row in cursor.fetchall():
+            docs.append({
+                "id": row["id"],
+                "doc_id": row["doc_id"],
+                "title": row["title"],
+                "content": row["content"][:200] + "..." if len(row["content"]) > 200 else row["content"],
+                "category": row["category"],
+                "tags": row["tags"].split(",") if row["tags"] else [],
+                "author": row["author"],
+                "version": row["version"],
+                "status": row["status"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"]
+            })
+        conn.close()
+        return {"documents": docs}
+
+    def get_document(self, doc_id):
+        """获取单个文档"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM documents WHERE id = ?", (doc_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return {
+                "id": row["id"],
+                "doc_id": row["doc_id"],
+                "title": row["title"],
+                "content": row["content"],
+                "category": row["category"],
+                "tags": row["tags"].split(",") if row["tags"] else [],
+                "author": row["author"],
+                "version": row["version"],
+                "status": row["status"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"]
+            }
+        return None
+
+    def create_document(self, data):
+        """创建文档"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        doc_id = data.get("doc_id", f"doc_{datetime.now().strftime('%Y%m%d%H%M%S')}")
+        tags = ",".join(data.get("tags", [])) if isinstance(data.get("tags"), list) else data.get("tags", "")
+
+        cursor.execute(
+            "INSERT INTO documents (doc_id, title, content, category, tags, author, version, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (doc_id, data.get("title"), data.get("content"), data.get("category", "general"), tags,
+             data.get("author", "system"), data.get("version", "1.0.0"), data.get("status", "published"))
+        )
+        doc_db_id = cursor.lastrowid
+
+        # 创建版本记录
+        cursor.execute(
+            "INSERT INTO document_versions (document_id, version, content, change_summary, created_by) VALUES (?, ?, ?, ?, ?)",
+            (doc_db_id, data.get("version", "1.0.0"), data.get("content"), "初始版本", data.get("author", "system"))
+        )
+
+        conn.commit()
+        conn.close()
+        return {"id": doc_db_id, "doc_id": doc_id, **data}
+
+    def update_document(self, doc_id, data):
+        """更新文档"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # 获取原文档
+        cursor.execute("SELECT * FROM documents WHERE id = ?", (doc_id,))
+        old_doc = cursor.fetchone()
+
+        tags = ",".join(data.get("tags", [])) if isinstance(data.get("tags"), list) else data.get("tags", old_doc["tags"])
+        version = data.get("version", old_doc["version"])
+
+        cursor.execute(
+            "UPDATE documents SET title = ?, content = ?, category = ?, tags = ?, version = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (data.get("title", old_doc["title"]), data.get("content", old_doc["content"]),
+             data.get("category", old_doc["category"]), tags, version,
+             data.get("status", old_doc["status"]), doc_id)
+        )
+
+        # 创建新版本记录
+        if data.get("content") and data.get("content") != old_doc["content"]:
+            cursor.execute(
+                "INSERT INTO document_versions (document_id, version, content, change_summary, created_by) VALUES (?, ?, ?, ?, ?)",
+                (doc_id, version, data.get("content"), data.get("change_summary", "更新版本"), data.get("author", "system"))
+            )
+
+        conn.commit()
+        conn.close()
+        return {"id": doc_id, **data}
+
+    def delete_document(self, doc_id):
+        """删除文档"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM document_versions WHERE document_id = ?", (doc_id,))
+        cursor.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
+        conn.commit()
+        conn.close()
+
+    def get_document_versions(self, doc_id):
+        """获取文档版本历史"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM document_versions WHERE document_id = ? ORDER BY created_at DESC", (doc_id,))
+        versions = []
+        for row in cursor.fetchall():
+            versions.append({
+                "id": row["id"],
+                "version": row["version"],
+                "content": row["content"],
+                "change_summary": row["change_summary"],
+                "created_by": row["created_by"],
+                "created_at": row["created_at"]
+            })
+        conn.close()
+        return {"versions": versions}
+
+    # ==========  конец 知识库方法 ==========
+
+    # ========== IM 即时通讯方法 ==========
+
+    def get_conversations(self, user_id=None):
+        """获取会话列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        if user_id:
+            cursor.execute("SELECT * FROM conversations WHERE participant_ids LIKE ? ORDER BY last_message_at DESC", (f'%{user_id}%',))
+        else:
+            cursor.execute("SELECT * FROM conversations ORDER BY last_message_at DESC")
+        conversations = []
+        for row in cursor.fetchall():
+            conversations.append({
+                "id": row["id"],
+                "conversation_id": row["conversation_id"],
+                "participant_ids": row["participant_ids"].split(","),
+                "last_message_at": row["last_message_at"],
+                "last_message_content": row["last_message_content"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"]
+            })
+        conn.close()
+        return {"conversations": conversations}
+
+    def get_conversation(self, conv_id):
+        """获取单个会话"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM conversations WHERE conversation_id = ?", (conv_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return {
+                "id": row["id"],
+                "conversation_id": row["conversation_id"],
+                "participant_ids": row["participant_ids"].split(","),
+                "last_message_at": row["last_message_at"],
+                "last_message_content": row["last_message_content"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"]
+            }
+        return None
+
+    def create_conversation(self, data):
+        """创建会话"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        participants = data.get("participants", [])
+        conversation_id = data.get("conversation_id", f"conv_{datetime.now().strftime('%Y%m%d%H%M%S')}")
+        participant_ids = ",".join(participants)
+
+        try:
+            cursor.execute(
+                "INSERT INTO conversations (conversation_id, participant_ids) VALUES (?, ?)",
+                (conversation_id, participant_ids)
+            )
+            conn.commit()
+            return {"id": cursor.lastrowid, "conversation_id": conversation_id, **data}
+        except sqlite3.IntegrityError:
+            # 会话已存在，返回现有会话
+            cursor.execute("SELECT * FROM conversations WHERE conversation_id = ?", (conversation_id,))
+            row = cursor.fetchone()
+            return {"id": row["id"], "conversation_id": conversation_id, **data} if row else None
+        finally:
+            conn.close()
+
+    def get_messages(self, conv_id):
+        """获取会话消息"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 50", (conv_id,))
+        messages = []
+        for row in cursor.fetchall():
+            messages.append({
+                "id": row["id"],
+                "conversation_id": row["conversation_id"],
+                "sender_id": row["sender_id"],
+                "receiver_id": row["receiver_id"],
+                "content": row["content"],
+                "message_type": row["message_type"],
+                "is_read": bool(row["is_read"]),
+                "created_at": row["created_at"]
+            })
+        conn.close()
+        return {"messages": list(reversed(messages))}
+
+    def get_all_messages(self):
+        """获取所有消息（用于调试）"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM messages ORDER BY created_at DESC LIMIT 100")
+        messages = []
+        for row in cursor.fetchall():
+            messages.append({
+                "id": row["id"],
+                "conversation_id": row["conversation_id"],
+                "sender_id": row["sender_id"],
+                "receiver_id": row["receiver_id"],
+                "content": row["content"],
+                "message_type": row["message_type"],
+                "is_read": bool(row["is_read"]),
+                "created_at": row["created_at"]
+            })
+        conn.close()
+        return {"messages": messages}
+
+    def send_message(self, data):
+        """发送消息"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        conversation_id = data.get("conversation_id")
+        sender_id = data.get("sender_id")
+        receiver_id = data.get("receiver_id")
+        content = data.get("content")
+
+        cursor.execute(
+            "INSERT INTO messages (conversation_id, sender_id, receiver_id, content, message_type) VALUES (?, ?, ?, ?, ?)",
+            (conversation_id, sender_id, receiver_id, content, data.get("message_type", "text"))
+        )
+        msg_id = cursor.lastrowid
+
+        # 更新会话
+        cursor.execute(
+            "UPDATE conversations SET last_message_at = CURRENT_TIMESTAMP, last_message_content = ?, updated_at = CURRENT_TIMESTAMP WHERE conversation_id = ?",
+            (content[:100] if content else "", conversation_id)
+        )
+
+        # 更新未读计数
+        cursor.execute(
+            "INSERT OR REPLACE INTO unread_counts (user_id, conversation_id, count, updated_at) VALUES (?, ?, COALESCE((SELECT count FROM unread_counts WHERE user_id = ? AND conversation_id = ?), 0) + 1, CURRENT_TIMESTAMP)",
+            (receiver_id, conversation_id, receiver_id, conversation_id)
+        )
+
+        conn.commit()
+        conn.close()
+
+        # WebSocket 推送
+        asyncio.run(self.broadcast_message({"id": msg_id, **data}))
+
+        return {"id": msg_id, **data}
+
+    def mark_message_read(self, msg_id):
+        """标记消息已读"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # 获取消息
+        cursor.execute("SELECT * FROM messages WHERE id = ?", (msg_id,))
+        msg = cursor.fetchone()
+
+        if msg:
+            # 标记已读
+            cursor.execute("UPDATE messages SET is_read = TRUE WHERE id = ?", (msg_id,))
+
+            # 减少未读计数
+            cursor.execute(
+                "UPDATE unread_counts SET count = MAX(0, count - 1), updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND conversation_id = ?",
+                (msg["receiver_id"], msg["conversation_id"])
+            )
+
+            conn.commit()
+
+        conn.close()
+
+    def get_unread_count(self, user_id):
+        """获取未读消息数"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT SUM(count) as total FROM unread_counts WHERE user_id = ?", (user_id,))
+        row = cursor.fetchone()
+        conn.close()
+        return {"unread_count": row["total"] or 0}
+
+    async def broadcast_message(self, data):
+        """推送消息到 WebSocket 客户端"""
+        if websocket_clients:
+            message = json.dumps({"type": "message", "data": data}, ensure_ascii=False)
+            await asyncio.gather(
+                *[ws.send(message) for ws in websocket_clients],
+                return_exceptions=True
+            )
+
+    # ==========  конец IM 方法 ==========
+
+    # ========== Agent 编排引擎方法 ==========
+
+    def get_agent_registry(self):
+        """获取 Agent 注册列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM agent_registry ORDER BY created_at DESC")
+        agents = []
+        for row in cursor.fetchall():
+            agents.append({
+                "id": row["id"],
+                "agent_id": row["agent_id"],
+                "agent_name": row["agent_name"],
+                "status": row["status"],
+                "capabilities": row["capabilities"].split(",") if row["capabilities"] else [],
+                "current_load": row["current_load"],
+                "max_load": row["max_load"],
+                "last_heartbeat": row["last_heartbeat"]
+            })
+        conn.close()
+        return {"agents": agents}
+
+    def get_agent(self, agent_id):
+        """获取单个 Agent 信息"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM agent_registry WHERE agent_id = ?", (agent_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return {
+                "id": row["id"],
+                "agent_id": row["agent_id"],
+                "agent_name": row["agent_name"],
+                "status": row["status"],
+                "capabilities": row["capabilities"].split(",") if row["capabilities"] else [],
+                "current_load": row["current_load"],
+                "max_load": row["max_load"],
+                "last_heartbeat": row["last_heartbeat"]
+            }
+        return None
+
+    def register_agent(self, data):
+        """注册 Agent"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        agent_id = data.get("agent_id")
+        capabilities = ",".join(data.get("capabilities", [])) if isinstance(data.get("capabilities"), list) else data.get("capabilities", "")
+
+        try:
+            cursor.execute(
+                "INSERT INTO agent_registry (agent_id, agent_name, status, capabilities, max_load) VALUES (?, ?, ?, ?, ?)",
+                (agent_id, data.get("agent_name"), data.get("status", "active"), capabilities, data.get("max_load", 100))
+            )
+            conn.commit()
+            return {"id": cursor.lastrowid, **data}
+        except sqlite3.IntegrityError:
+            # 已存在，更新信息
+            cursor.execute(
+                "UPDATE agent_registry SET agent_name = ?, status = ?, capabilities = ?, last_heartbeat = CURRENT_TIMESTAMP WHERE agent_id = ?",
+                (data.get("agent_name"), data.get("status", "active"), capabilities, agent_id)
+            )
+            conn.commit()
+            return {"id": data.get("agent_id"), **data}
+        finally:
+            conn.close()
+
+    def get_agent_skills(self, agent_id):
+        """获取 Agent 技能"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM agent_skills WHERE agent_id = ? ORDER BY proficiency DESC", (agent_id,))
+        skills = []
+        for row in cursor.fetchall():
+            skills.append({
+                "id": row["id"],
+                "agent_id": row["agent_id"],
+                "skill_id": row["skill_id"],
+                "proficiency": row["proficiency"],
+                "usage_count": row["usage_count"]
+            })
+        conn.close()
+        return {"skills": skills}
+
+    def get_orchestration_plans(self):
+        """获取编排计划列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM orchestration_plans ORDER BY created_at DESC")
+        plans = []
+        for row in cursor.fetchall():
+            plans.append({
+                "id": row["id"],
+                "plan_id": row["plan_id"],
+                "task_id": row["task_id"],
+                "plan_name": row["plan_name"],
+                "agent_sequence": row["agent_sequence"],
+                "status": row["status"],
+                "created_by": row["created_by"],
+                "created_at": row["created_at"],
+                "completed_at": row["completed_at"]
+            })
+        conn.close()
+        return {"plans": plans}
+
+    def get_orchestration_plan(self, plan_id):
+        """获取单个编排计划"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM orchestration_plans WHERE id = ?", (plan_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return {
+                "id": row["id"],
+                "plan_id": row["plan_id"],
+                "task_id": row["task_id"],
+                "plan_name": row["plan_name"],
+                "agent_sequence": json.loads(row["agent_sequence"]) if row["agent_sequence"] else [],
+                "status": row["status"],
+                "created_by": row["created_by"],
+                "created_at": row["created_at"],
+                "completed_at": row["completed_at"]
+            }
+        return None
+
+    def create_orchestration_plan(self, data):
+        """创建编排计划"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        plan_id = data.get("plan_id", f"plan_{datetime.now().strftime('%Y%m%d%H%M%S')}")
+        agent_sequence = json.dumps(data.get("agent_sequence", []), ensure_ascii=False)
+
+        cursor.execute(
+            "INSERT INTO orchestration_plans (plan_id, task_id, plan_name, agent_sequence, status, created_by) VALUES (?, ?, ?, ?, ?, ?)",
+            (plan_id, data.get("task_id"), data.get("plan_name"), agent_sequence, data.get("status", "pending"), data.get("created_by", "system"))
+        )
+        plan_db_id = cursor.lastrowid
+
+        # 创建执行历史
+        agent_seq = data.get("agent_sequence", [])
+        for i, step in enumerate(agent_seq):
+            cursor.execute(
+                "INSERT INTO orchestration_history (plan_id, agent_id, step_number, action, status) VALUES (?, ?, ?, ?, ?)",
+                (plan_db_id, step.get("agent_id"), i + 1, step.get("action"), "pending")
+            )
+
+        conn.commit()
+        conn.close()
+        return {"id": plan_db_id, "plan_id": plan_id, **data}
+
+    def get_orchestration_history(self, plan_id):
+        """获取编排历史"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM orchestration_history WHERE plan_id = ? ORDER BY step_number", (plan_id,))
+        history = []
+        for row in cursor.fetchall():
+            history.append({
+                "id": row["id"],
+                "plan_id": row["plan_id"],
+                "agent_id": row["agent_id"],
+                "step_number": row["step_number"],
+                "action": row["action"],
+                "result": row["result"],
+                "status": row["status"],
+                "started_at": row["started_at"],
+                "completed_at": row["completed_at"]
+            })
+        conn.close()
+        return {"history": history}
+
+    def execute_orchestration_plan(self, plan_id):
+        """执行编排计划"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # 获取计划
+        cursor.execute("SELECT * FROM orchestration_plans WHERE id = ?", (plan_id,))
+        plan = cursor.fetchone()
+
+        if not plan:
+            conn.close()
+            return {"error": "计划不存在"}
+
+        # 更新状态为运行中
+        cursor.execute("UPDATE orchestration_plans SET status = 'running' WHERE id = ?", (plan_id,))
+
+        # 获取第一个待执行的步骤
+        cursor.execute("SELECT * FROM orchestration_history WHERE plan_id = ? AND status = 'pending' ORDER BY step_number LIMIT 1", (plan_id,))
+        step = cursor.fetchone()
+
+        if step:
+            # 更新状态为运行中
+            cursor.execute("UPDATE orchestration_history SET status = 'running', started_at = CURRENT_TIMESTAMP WHERE id = ?", (step["id"],))
+
+            # 更新 Agent 负载
+            cursor.execute("UPDATE agent_registry SET current_load = current_load + 1 WHERE agent_id = ?", (step["agent_id"],))
+
+            # 记录执行日志
+            cursor.execute(
+                "INSERT INTO workflow_execution_logs (instance_id, node_id, action, result) VALUES (?, ?, ?, ?)",
+                (plan_id, step["agent_id"], step["action"], "执行中")
+            )
+
+        conn.commit()
+        conn.close()
+        return {"success": True, "plan_id": plan_id, "current_step": step["id"] if step else None}
+
+    def auto_assign_agents(self, task_id=None):
+        """自动分配 Agent（基于负载和技能匹配）"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # 获取所有活跃 Agent
+        cursor.execute("SELECT * FROM agent_registry WHERE status = 'active' AND current_load < max_load")
+        available_agents = cursor.fetchall()
+
+        if not available_agents:
+            conn.close()
+            return {"assigned_agent": None, "reason": "无可用 Agent"}
+
+        # 简单轮询策略：选择负载最低的 Agent
+        best_agent = min(available_agents, key=lambda a: a["current_load"] / a["max_load"])
+
+        result = {
+            "assigned_agent": best_agent["agent_id"],
+            "agent_name": best_agent["agent_name"],
+            "current_load": best_agent["current_load"],
+            "max_load": best_agent["max_load"]
+        }
+
+        conn.close()
+        return result
+
+    # ==========  конец Agent 编排引擎方法 ==========
+
+    # ========== RBAC 权限系统方法 ==========
+
+    def get_roles(self):
+        """获取角色列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM roles ORDER BY created_at DESC")
+        roles = []
+        for row in cursor.fetchall():
+            roles.append({
+                "id": row["id"],
+                "role_id": row["role_id"],
+                "role_name": row["role_name"],
+                "description": row["description"],
+                "permissions": row["permissions"].split(",") if row["permissions"] else [],
+                "created_at": row["created_at"]
+            })
+        conn.close()
+        return {"roles": roles}
+
+    def get_role(self, role_id):
+        """获取单个角色"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM roles WHERE role_id = ?", (role_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return {
+                "id": row["id"],
+                "role_id": row["role_id"],
+                "role_name": row["role_name"],
+                "description": row["description"],
+                "permissions": row["permissions"].split(",") if row["permissions"] else [],
+                "created_at": row["created_at"]
+            }
+        return None
+
+    def create_role(self, data):
+        """创建角色"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        role_id = data.get("role_id")
+        permissions = ",".join(data.get("permissions", [])) if isinstance(data.get("permissions"), list) else data.get("permissions", "")
+
+        try:
+            cursor.execute(
+                "INSERT INTO roles (role_id, role_name, description, permissions) VALUES (?, ?, ?, ?)",
+                (role_id, data.get("role_name"), data.get("description"), permissions)
+            )
+            conn.commit()
+            return {"id": cursor.lastrowid, **data}
+        except sqlite3.IntegrityError:
+            conn.close()
+            return {"error": "角色已存在"}
+
+    def update_role(self, role_id, data):
+        """更新角色"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        permissions = ",".join(data.get("permissions", [])) if isinstance(data.get("permissions"), list) else data.get("permissions", "")
+
+        cursor.execute(
+            "UPDATE roles SET role_name = ?, description = ?, permissions = ? WHERE role_id = ?",
+            (data.get("role_name"), data.get("description"), permissions, role_id)
+        )
+        conn.commit()
+        conn.close()
+        return {"role_id": role_id, **data}
+
+    def get_permissions(self):
+        """获取权限列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM permissions ORDER BY resource_type, action")
+        perms = []
+        for row in cursor.fetchall():
+            perms.append({
+                "id": row["id"],
+                "permission_id": row["permission_id"],
+                "permission_name": row["permission_name"],
+                "resource_type": row["resource_type"],
+                "action": row["action"],
+                "description": row["description"],
+                "created_at": row["created_at"]
+            })
+        conn.close()
+        return {"permissions": perms}
+
+    def create_permission(self, data):
+        """创建权限"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        permission_id = data.get("permission_id")
+
+        try:
+            cursor.execute(
+                "INSERT INTO permissions (permission_id, permission_name, resource_type, action, description) VALUES (?, ?, ?, ?, ?)",
+                (permission_id, data.get("permission_name"), data.get("resource_type"), data.get("action"), data.get("description"))
+            )
+            conn.commit()
+            return {"id": cursor.lastrowid, **data}
+        except sqlite3.IntegrityError:
+            conn.close()
+            return {"error": "权限已存在"}
+
+    def get_role_permissions(self, role_id):
+        """获取角色权限"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM data_permissions WHERE role_id = ?", (role_id,))
+        perms = []
+        for row in cursor.fetchall():
+            perms.append({
+                "id": row["id"],
+                "role_id": row["role_id"],
+                "resource_type": row["resource_type"],
+                "resource_id": row["resource_id"],
+                "access_level": row["access_level"],
+                "created_at": row["created_at"]
+            })
+        conn.close()
+        return {"permissions": perms}
+
+    def set_role_permissions(self, role_id, data):
+        """设置角色数据权限"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # 删除现有权限
+        cursor.execute("DELETE FROM data_permissions WHERE role_id = ?", (role_id,))
+
+        # 添加新权限
+        for perm in data.get("permissions", []):
+            cursor.execute(
+                "INSERT INTO data_permissions (role_id, resource_type, resource_id, access_level) VALUES (?, ?, ?, ?)",
+                (role_id, perm.get("resource_type"), perm.get("resource_id", "*"), perm.get("access_level", "read"))
+            )
+
+        conn.commit()
+        conn.close()
+        return {"role_id": role_id, "count": len(data.get("permissions", []))}
+
+    def get_user_roles(self, user_id):
+        """获取用户角色"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM user_roles WHERE user_id = ?", (user_id,))
+        roles = []
+        for row in cursor.fetchall():
+            roles.append({
+                "id": row["id"],
+                "user_id": row["user_id"],
+                "role_id": row["role_id"],
+                "granted_by": row["granted_by"],
+                "created_at": row["created_at"]
+            })
+        conn.close()
+        return {"roles": roles}
+
+    def assign_user_role(self, data):
+        """分配用户角色"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute(
+                "INSERT INTO user_roles (user_id, role_id, granted_by) VALUES (?, ?, ?)",
+                (data.get("user_id"), data.get("role_id"), data.get("granted_by", "system"))
+            )
+            conn.commit()
+            return {"user_id": data.get("user_id"), "role_id": data.get("role_id")}
+        except sqlite3.IntegrityError:
+            conn.close()
+            return {"error": "角色已分配"}
+
+    def check_permission(self, user_id, resource, action):
+        """检查用户权限"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # 获取用户所有角色
+        cursor.execute("SELECT role_id FROM user_roles WHERE user_id = ?", (user_id,))
+        user_roles = [row[0] for row in cursor.fetchall()]
+
+        if not user_roles:
+            conn.close()
+            return {"allowed": False, "reason": "用户无角色"}
+
+        # 检查角色权限
+        allowed = False
+        for role_id in user_roles:
+            # 检查通用权限（permissions 字段）
+            cursor.execute("SELECT permissions FROM roles WHERE role_id = ?", (role_id,))
+            row = cursor.fetchone()
+            if row and row[0]:
+                perms = row[0].split(",")
+                if f"{resource}:{action}" in perms or f"*:{action}" in perms or "*:*" in perms:
+                    allowed = True
+                    break
+
+            # 检查数据权限
+            cursor.execute("""
+                SELECT access_level FROM data_permissions
+                WHERE role_id = ? AND resource_type = ? AND (resource_id = ? OR resource_id = '*')
+            """, (role_id, resource, user_id))
+            data_perms = cursor.fetchall()
+            if data_perms:
+                for perm in data_perms:
+                    if perm[0] in [action, "write", "*"]:
+                        allowed = True
+                        break
+
+        conn.close()
+
+        # 记录审计日志
+        self.log_permission_audit(user_id, "check", resource, action, "allowed" if allowed else "denied")
+
+        return {"allowed": allowed, "user_id": user_id, "resource": resource, "action": action}
+
+    def log_permission_audit(self, user_id, action, resource_type, resource_id, result):
+        """记录权限审计日志"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO permission_audit (user_id, action, resource_type, resource_id, result) VALUES (?, ?, ?, ?, ?)",
+            (user_id, action, resource_type, resource_id, result)
+        )
+        conn.commit()
+        conn.close()
+
+    # ==========  конец RBAC 方法 ==========
+
+    # ========== 财务模块方法 ==========
+
+    def get_finance_ledger(self):
+        """获取总账"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM finance_ledger ORDER BY created_at DESC LIMIT 100")
+        entries = []
+        for row in cursor.fetchall():
+            entries.append({
+                "id": row["id"],
+                "entry_id": row["entry_id"],
+                "entry_type": row["entry_type"],
+                "account_code": row["account_code"],
+                "debit": row["debit"],
+                "credit": row["credit"],
+                "balance": row["balance"],
+                "description": row["description"],
+                "created_at": row["created_at"]
+            })
+        conn.close()
+        return {"entries": entries}
+
+    def get_finance_accounts(self):
+        """获取会计科目"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM finance_accounts ORDER BY account_code")
+        accounts = []
+        for row in cursor.fetchall():
+            accounts.append({
+                "id": row["id"],
+                "account_code": row["account_code"],
+                "account_name": row["account_name"],
+                "account_type": row["account_type"],
+                "balance": row["balance"]
+            })
+        conn.close()
+        return {"accounts": accounts}
+
+    def get_finance_receivables(self):
+        """获取应收账款"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM finance_receivables ORDER BY due_date")
+        receivables = []
+        for row in cursor.fetchall():
+            receivables.append({
+                "id": row["id"],
+                "invoice_id": row["invoice_id"],
+                "customer_id": row["customer_id"],
+                "amount": row["amount"],
+                "paid_amount": row["paid_amount"],
+                "status": row["status"],
+                "due_date": row["due_date"]
+            })
+        conn.close()
+        return {"receivables": receivables}
+
+    def get_finance_payables(self):
+        """获取应付账款"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM finance_payables ORDER BY due_date")
+        payables = []
+        for row in cursor.fetchall():
+            payables.append({
+                "id": row["id"],
+                "bill_id": row["bill_id"],
+                "vendor_id": row["vendor_id"],
+                "amount": row["amount"],
+                "paid_amount": row["paid_amount"],
+                "status": row["status"],
+                "due_date": row["due_date"]
+            })
+        conn.close()
+        return {"payables": payables}
+
+    def get_finance_budget(self):
+        """获取预算"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM finance_budget ORDER BY created_at DESC")
+        budgets = []
+        for row in cursor.fetchall():
+            budgets.append({
+                "id": row["id"],
+                "budget_id": row["budget_id"],
+                "department": row["department"],
+                "category": row["category"],
+                "amount": row["amount"],
+                "used_amount": row["used_amount"],
+                "start_date": row["start_date"],
+                "end_date": row["end_date"]
+            })
+        conn.close()
+        return {"budgets": budgets}
+
+    def get_finance_reports(self):
+        """获取财务报表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM finance_reports ORDER BY created_at DESC")
+        reports = []
+        for row in cursor.fetchall():
+            reports.append({
+                "id": row["id"],
+                "report_id": row["report_id"],
+                "report_type": row["report_type"],
+                "period": row["period"],
+                "data": json.loads(row["data"]) if row["data"] else {},
+                "created_at": row["created_at"]
+            })
+        conn.close()
+        return {"reports": reports}
+
+    def get_finance_summary(self):
+        """获取财务摘要"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # 总收入
+        cursor.execute("SELECT COALESCE(SUM(debit), 0) FROM finance_ledger WHERE entry_type = 'income'")
+        total_income = cursor.fetchone()[0] or 0
+
+        # 总支出
+        cursor.execute("SELECT COALESCE(SUM(credit), 0) FROM finance_ledger WHERE entry_type = 'expense'")
+        total_expense = cursor.fetchone()[0] or 0
+
+        # 应收账款
+        cursor.execute("SELECT COALESCE(SUM(amount - paid_amount), 0) FROM finance_receivables WHERE status = 'pending'")
+        total_receivable = cursor.fetchone()[0] or 0
+
+        # 应付账款
+        cursor.execute("SELECT COALESCE(SUM(amount - paid_amount), 0) FROM finance_payables WHERE status = 'pending'")
+        total_payable = cursor.fetchone()[0] or 0
+
+        conn.close()
+
+        return {
+            "total_income": total_income,
+            "total_expense": total_expense,
+            "net_profit": total_income - total_expense,
+            "total_receivable": total_receivable,
+            "total_payable": total_payable,
+            "working_capital": total_receivable - total_payable
+        }
+
+    def create_finance_ledger_entry(self, data):
+        """创建总账分录"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        entry_id = data.get("entry_id", f"JE{datetime.now().strftime('%Y%m%d%H%M%S')}")
+
+        cursor.execute(
+            "INSERT INTO finance_ledger (entry_id, entry_type, account_code, debit, credit, balance, description, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (entry_id, data.get("entry_type"), data.get("account_code"), data.get("debit", 0), data.get("credit", 0), data.get("balance", 0), data.get("description"), data.get("created_by", "system"))
+        )
+        conn.commit()
+        conn.close()
+        return {"id": cursor.lastrowid, "entry_id": entry_id}
+
+    def create_receivable(self, data):
+        """创建应收账款"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        invoice_id = data.get("invoice_id") or f"INV{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        cursor.execute(
+            "INSERT INTO finance_receivables (invoice_id, customer_id, amount, status) VALUES (?, ?, ?, ?)",
+            (invoice_id, data.get("customer_id"), data.get("amount", 0), data.get("status", "pending"))
+        )
+        conn.commit()
+        conn.close()
+        return {"id": cursor.lastrowid, "invoice_id": invoice_id}
+
+    def create_payable(self, data):
+        """创建应付账款"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        bill_id = data.get("bill_id") or f"BILL{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        cursor.execute(
+            "INSERT INTO finance_payables (bill_id, vendor_id, amount, status) VALUES (?, ?, ?, ?)",
+            (bill_id, data.get("vendor_id"), data.get("amount", 0), data.get("status", "pending"))
+        )
+        conn.commit()
+        conn.close()
+        return {"id": cursor.lastrowid, "bill_id": bill_id}
+
+    def create_budget(self, data):
+        """创建预算"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        budget_id = data.get("budget_id", f"BG{datetime.now().strftime('%Y%m%d%H%M%S')}")
+
+        cursor.execute(
+            "INSERT INTO finance_budget (budget_id, department, category, amount, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)",
+            (budget_id, data.get("department"), data.get("category"), data.get("amount"), data.get("start_date"), data.get("end_date"))
+        )
+        conn.commit()
+        conn.close()
+        return {"id": cursor.lastrowid, "budget_id": budget_id}
+
+    def create_finance_report(self, data):
+        """创建财务报表"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        report_id = data.get("report_id", f"RPT{datetime.now().strftime('%Y%m%d%H%M%S')}")
+
+        cursor.execute(
+            "INSERT INTO finance_reports (report_id, report_type, period, data, created_by) VALUES (?, ?, ?, ?, ?)",
+            (report_id, data.get("report_type"), data.get("period"), json.dumps(data.get("data", {}), ensure_ascii=False), data.get("created_by", "system"))
+        )
+        conn.commit()
+        conn.close()
+        return {"id": cursor.lastrowid, "report_id": report_id}
+
+    # ========== CRM 模块方法 ==========
+
+    def get_crm_customers(self):
+        """获取客户列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM crm_customers ORDER BY created_at DESC")
+        customers = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return {"customers": customers}
+
+    def get_crm_opportunities(self):
+        """获取商机列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM crm_opportunities ORDER BY created_at DESC")
+        opportunities = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return {"opportunities": opportunities}
+
+    def get_crm_contracts(self):
+        """获取合同列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM crm_contracts ORDER BY created_at DESC")
+        contracts = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return {"contracts": contracts}
+
+    def create_crm_customer(self, data):
+        """创建客户"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        customer_id = data.get("customer_id") or f"CUST{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        cursor.execute(
+            "INSERT INTO crm_customers (customer_id, customer_name, customer_type, industry, contact_person, contact_email, contact_phone, address, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (customer_id, data.get("customer_name"), data.get("customer_type", "enterprise"), data.get("industry"), data.get("contact_person"), data.get("contact_email"), data.get("contact_phone"), data.get("address"), data.get("status", "active"))
+        )
+        conn.commit()
+        conn.close()
+        return {"id": cursor.lastrowid, "customer_id": customer_id}
+
+    def create_crm_opportunity(self, data):
+        """创建商机"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        opp_id = data.get("opp_id") or f"OPP{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        cursor.execute(
+            "INSERT INTO crm_opportunities (opp_id, customer_id, title, amount, stage, probability, expected_close_date, owner) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (opp_id, data.get("customer_id"), data.get("title"), data.get("amount", 0), data.get("stage", "lead"), data.get("probability", 10), data.get("expected_close_date"), data.get("owner"))
+        )
+        conn.commit()
+        conn.close()
+        return {"id": cursor.lastrowid, "opp_id": opp_id}
+
+    def create_crm_contract(self, data):
+        """创建合同"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        contract_id = data.get("contract_id") or f"CONT{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        cursor.execute(
+            "INSERT INTO crm_contracts (contract_id, customer_id, opp_id, title, amount, status, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (contract_id, data.get("customer_id"), data.get("opp_id"), data.get("title"), data.get("amount"), data.get("status", "draft"), data.get("start_date"), data.get("end_date"))
+        )
+        conn.commit()
+        conn.close()
+        return {"id": cursor.lastrowid, "contract_id": contract_id}
+
+    # ==========  конец 财务/CRM 模块方法 ==========
+
+    # ========== BI 分析模块方法 ==========
+
+    def get_bi_reports(self):
+        """获取 BI 报表列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM bi_reports ORDER BY created_at DESC")
+        reports = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return {"reports": reports}
+
+    def get_bi_dashboard(self):
+        """获取 BI 仪表板数据（聚合数据）"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # 任务统计
+        cursor.execute("SELECT status, COUNT(*) as count FROM tasks GROUP BY status")
+        task_stats = {row['status']: row['count'] for row in cursor.fetchall()}
+
+        # 财务统计
+        cursor.execute("SELECT COALESCE(SUM(debit), 0) as total FROM finance_ledger WHERE entry_type = 'income'")
+        total_income = cursor.fetchone()['total'] or 0
+
+        cursor.execute("SELECT COALESCE(SUM(amount), 0) as total FROM finance_receivables WHERE status = 'pending'")
+        total_receivable = cursor.fetchone()['total'] or 0
+
+        # CRM 统计
+        cursor.execute("SELECT stage, COUNT(*) as count FROM crm_opportunities GROUP BY stage")
+        opp_stats = {row['stage']: row['count'] for row in cursor.fetchall()}
+
+        cursor.execute("SELECT COALESCE(SUM(amount), 0) as total FROM crm_contracts WHERE status = 'active'")
+        contract_revenue = cursor.fetchone()['total'] or 0
+
+        conn.close()
+
+        return {
+            "tasks": task_stats,
+            "finance": {
+                "total_income": total_income,
+                "total_receivable": total_receivable
+            },
+            "crm": {
+                "opportunities_by_stage": opp_stats,
+                "contract_revenue": contract_revenue
+            }
+        }
+
+    def create_bi_report(self, data):
+        """创建 BI 报表"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        report_id = data.get("report_id") or f"RPT{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        cursor.execute(
+            "INSERT INTO bi_reports (report_id, report_name, report_type, config, created_by) VALUES (?, ?, ?, ?, ?)",
+            (report_id, data.get("report_name"), data.get("report_type", "custom"), json.dumps(data.get("config", {}), ensure_ascii=False), data.get("created_by", "system"))
+        )
+        conn.commit()
+        conn.close()
+        return {"id": cursor.lastrowid, "report_id": report_id}
+
+    # ==========  конец BI 模块方法 ==========
+
+    # ========== 通知中心方法 ==========
+
+    def get_notifications(self, user_id="system"):
+        """获取通知列表"""
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # 生成模拟通知数据
+        now = datetime.now()
+        notifications = [
+            {
+                "id": 1,
+                "icon": "📋",
+                "title": "新任务已分配",
+                "message": "CEO 给您分配了一个新任务",
+                "type": "task",
+                "read": False,
+                "time": "5 分钟前",
+                "created_at": (now - timedelta(minutes=5)).isoformat()
+            },
+            {
+                "id": 2,
+                "icon": "💰",
+                "title": "报销审批待处理",
+                "message": "张三的差旅报销申请等待您的审批",
+                "type": "approval",
+                "read": False,
+                "time": "15 分钟前",
+                "created_at": (now - timedelta(minutes=15)).isoformat()
+            },
+            {
+                "id": 3,
+                "icon": "🤝",
+                "title": "新客户签约",
+                "message": "客户 A 已签署合同，金额 ¥500,000",
+                "type": "crm",
+                "read": True,
+                "time": "1 小时前",
+                "created_at": (now - timedelta(hours=1)).isoformat()
+            },
+            {
+                "id": 4,
+                "icon": "📊",
+                "title": "月度报告已生成",
+                "message": "2026 年 3 月经营分析报告已完成",
+                "type": "system",
+                "read": True,
+                "time": "2 小时前",
+                "created_at": (now - timedelta(hours=2)).isoformat()
+            },
+            {
+                "id": 5,
+                "icon": "⚠️",
+                "title": "预算预警",
+                "message": "工程部本月预算使用率已达 85%",
+                "type": "system",
+                "read": True,
+                "time": "3 小时前",
+                "created_at": (now - timedelta(hours=3)).isoformat()
+            }
+        ]
+
+        conn.close()
+        return {"notifications": notifications, "unread_count": sum(1 for n in notifications if not n["read"])}
+
+    def mark_notification_read(self, data):
+        """标记通知为已读"""
+        notification_id = data.get("notification_id")
+        # 实际应用中应该更新数据库
+        return {"success": True, "notification_id": notification_id}
+
+    # ==========  конец 通知中心方法 ==========
 
     async def broadcast_news(self, data):
         """推送新闻到 WebSocket 客户端"""

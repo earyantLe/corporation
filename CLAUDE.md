@@ -135,3 +135,42 @@ openclaw agent --agent ceo --message "公司要开发一个电商网站，请组
 2. **质量门禁**: QA 作为独立的质检角色，所有产出必须经过检查
 3. **技能复用**: 通用能力（如任务分配、质量检查）封装为 SKILL 文件
 4. **全互联协作**: 所有部门可以互相沟通，没有严格的层级限制
+5. **企业级平台**: Dashboard 提供 17 个管理页面，覆盖企业运营全流程
+
+## Dashboard 监控系统
+
+### 页面列表 (17 个)
+
+| 页面 | 文件名 | 功能描述 |
+|------|--------|----------|
+| 监控看板 | `index.html` | 系统状态、Agent 绩效、实时活动 |
+| 任务看板 | `kanban.html` | 任务看板视图、拖拽管理 |
+| 任务管理 | `tasks.html` | 任务 CRUD、分配、干预 |
+| 组织架构 | `org.html` | 12 Agent 角色、职责说明 |
+| 会议管理 | `meeting.html` | 会议安排、记录 |
+| 行事准则 | `conduct.html` | 员工行为规范 |
+| 公司政策 | `policies.html` | 政策制度管理 |
+| 技能管理 | `skills.html` | 技能配置、启用/禁用 |
+| 模型配置 | `models.html` | AI 模型配置、热切换 |
+| 工作流 | `workflow.html` | 可视化流程设计器、5 个预置模板 |
+| 知识库 | `knowledge.html` | 文档管理、版本控制、搜索 |
+| IM 通讯 | `im.html` | Agent-User 实时沟通 |
+| Agent 编排 | `orchestration.html` | Agent 注册、负载均衡、编排计划 |
+| 权限管理 | `rbac.html` | RBAC 角色权限管理 |
+| 财务管理 | `finance.html` | 总账、应收/应付、预算 |
+| CRM | `crm.html` | 客户档案、商机漏斗、合同管理 |
+| BI 分析 | `bi.html` | 仪表板、数据可视化、自定义报表 |
+
+### API 端点
+
+```
+任务管理：/api/tasks, /api/reviews, /api/audit-logs
+工作流：/api/workflows, /api/workflows/{id}/nodes, /api/workflows/{id}/execute
+知识库：/api/documents, /api/documents/{id}/versions
+IM: /api/messages, /api/conversations, /api/unread
+Agent 编排：/api/orchestration, /api/orchestration/auto-assign, /api/agents
+RBAC: /api/roles, /api/permissions, /api/user-roles, /api/permission/check
+财务：/api/finance/ledger, /api/finance/receivables, /api/finance/payables, /api/finance/budget, /api/finance/summary
+CRM: /api/crm/customers, /api/crm/opportunities, /api/crm/contracts
+BI: /api/bi/reports, /api/bi/dashboard
+```
