@@ -52,9 +52,7 @@ echo "📋 检查 API Key 配置..."
 
 # 查找已配置的 API Key（支持 models.json 和 auth-profiles.json 两种格式）
 MAIN_AUTH=""
-if [[ -f "$HOME/.openclaw/agents/taizi/agent/models.json" ]]; then
-    MAIN_AUTH="$HOME/.openclaw/agents/taizi/agent/models.json"
-elif [[ -f "$HOME/.openclaw/agents/ceo/agent/models.json" ]]; then
+if [[ -f "$HOME/.openclaw/agents/ceo/agent/models.json" ]]; then
     MAIN_AUTH="$HOME/.openclaw/agents/ceo/agent/models.json"
 elif [[ -f "$HOME/.openclaw/agents/ceo/agent/auth-profiles.json" ]]; then
     MAIN_AUTH="$HOME/.openclaw/agents/ceo/agent/auth-profiles.json"
@@ -75,9 +73,7 @@ if [[ -z "$MAIN_AUTH" ]]; then
     read -p "配置完成后按回车继续..."
 
     # 重新查找
-    if [[ -f "$HOME/.openclaw/agents/taizi/agent/models.json" ]]; then
-        MAIN_AUTH="$HOME/.openclaw/agents/taizi/agent/models.json"
-    elif [[ -f "$HOME/.openclaw/agents/ceo/agent/models.json" ]]; then
+    if [[ -f "$HOME/.openclaw/agents/ceo/agent/models.json" ]]; then
         MAIN_AUTH="$HOME/.openclaw/agents/ceo/agent/models.json"
     elif [[ -f "$HOME/.openclaw/agents/ceo/agent/auth-profiles.json" ]]; then
         MAIN_AUTH="$HOME/.openclaw/agents/ceo/agent/auth-profiles.json"

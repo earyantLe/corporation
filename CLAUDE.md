@@ -96,7 +96,7 @@ openclaw agents add {agent_id}
 
 ### 已修复问题
 
-1. **install.sh API Key 查找路径** - 现在优先从 taizi/ceo agent 的多个可能位置查找
+1. **install.sh API Key 查找路径** - 优先从 ceo agent 的多个可能位置查找
 2. **install.sh 错误处理** - 增加了详细的错误日志和失败回显
 3. **COO SOUL.md 表格格式** - 修复了"与其他角色关系"表格的不规范条目
 4. **CFO SOUL.md 表格格式** - 同上
