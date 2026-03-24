@@ -1,0 +1,102 @@
+{
+  "agents": {
+    "list": [
+      {
+        "id": "ceo",
+        "label": "CEO (首席执行官)",
+        "workspace": "~/.openclaw/workspace-ceo",
+        "subagents": {
+          "allowAgents": ["coo", "cfo", "cto", "hr", "finance", "legal", "marketing", "sales", "engineering", "design", "qa"]
+        }
+      },
+      {
+        "id": "coo",
+        "label": "COO (首席运营官)",
+        "workspace": "~/.openclaw/workspace-coo",
+        "subagents": {
+          "allowAgents": ["ceo", "cfo", "cto", "hr", "finance", "legal", "marketing", "sales", "engineering", "design", "qa"]
+        }
+      },
+      {
+        "id": "cfo",
+        "label": "CFO (首席财务官)",
+        "workspace": "~/.openclaw/workspace-cfo",
+        "subagents": {
+          "allowAgents": ["ceo", "coo", "cto", "hr", "finance", "legal", "marketing", "sales", "engineering", "design", "qa"]
+        }
+      },
+      {
+        "id": "cto",
+        "label": "CTO (首席技术官)",
+        "workspace": "~/.openclaw/workspace-cto",
+        "subagents": {
+          "allowAgents": ["ceo", "coo", "cfo", "hr", "finance", "legal", "marketing", "sales", "engineering", "design", "qa"]
+        }
+      },
+      {
+        "id": "hr",
+        "label": "人力总监",
+        "workspace": "~/.openclaw/workspace-hr",
+        "subagents": {
+          "allowAgents": ["ceo", "coo", "cfo", "cto", "finance", "legal", "marketing", "sales", "engineering", "design", "qa"]
+        }
+      },
+      {
+        "id": "finance",
+        "label": "财务总监",
+        "workspace": "~/.openclaw/workspace-finance",
+        "subagents": {
+          "allowAgents": ["ceo", "coo", "cfo", "cto", "hr", "legal", "marketing", "sales", "engineering", "design", "qa"]
+        }
+      },
+      {
+        "id": "legal",
+        "label": "法务总监",
+        "workspace": "~/.openclaw/workspace-legal",
+        "subagents": {
+          "allowAgents": ["ceo", "coo", "cfo", "cto", "hr", "finance", "marketing", "sales", "engineering", "design", "qa"]
+        }
+      },
+      {
+        "id": "marketing",
+        "label": "市场总监",
+        "workspace": "~/.openclaw/workspace-marketing",
+        "subagents": {
+          "allowAgents": ["ceo", "coo", "cfo", "cto", "hr", "finance", "legal", "sales", "engineering", "design", "qa"]
+        }
+      },
+      {
+        "id": "sales",
+        "label": "销售总监",
+        "workspace": "~/.openclaw/workspace-sales",
+        "subagents": {
+          "allowAgents": ["ceo", "coo", "cfo", "cto", "hr", "finance", "legal", "marketing", "engineering", "design", "qa"]
+        }
+      },
+      {
+        "id": "engineering",
+        "label": "工程总监",
+        "workspace": "~/.openclaw/workspace-engineering",
+        "subagents": {
+          "allowAgents": ["ceo", "coo", "cfo", "cto", "hr", "finance", "legal", "marketing", "sales", "design", "qa"]
+        }
+      },
+      {
+        "id": "design",
+        "label": "设计总监",
+        "workspace": "~/.openclaw/workspace-design",
+        "subagents": {
+          "allowAgents": ["ceo", "coo", "cfo", "cto", "hr", "finance", "legal", "marketing", "sales", "engineering", "qa"]
+        }
+      },
+      {
+        "id": "qa",
+        "label": "QA 总监",
+        "workspace": "~/.openclaw/workspace-qa",
+        "subagents": {
+          "allowAgents": ["ceo", "coo", "cfo", "cto", "hr", "finance", "legal", "marketing", "sales", "engineering", "design"]
+        }
+      }
+    ]
+  }
+}
