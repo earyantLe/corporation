@@ -1,0 +1,162 @@
+{
+  "skills": {
+    "list": [
+      {
+        "id": "task_assignment",
+        "label": "任务分配",
+        "path": "./skills/task_assignment/SKILL.md",
+        "users": ["ceo", "coo"],
+        "description": "任务接收与分配给相关部门"
+      },
+      {
+        "id": "quality_check",
+        "label": "质量检查",
+        "path": "./skills/quality_check/SKILL.md",
+        "users": ["qa"],
+        "description": "质量检查与验收"
+      },
+      {
+        "id": "strategy_meeting",
+        "label": "战略会议",
+        "path": "./skills/strategy_meeting/SKILL.md",
+        "users": ["ceo", "coo", "cto"],
+        "description": "战略会议组织与协调"
+      },
+      {
+        "id": "budget_planning",
+        "label": "预算规划",
+        "path": "./skills/budget_planning/SKILL.md",
+        "users": ["cfo", "finance"],
+        "description": "预算制定与成本效益分析"
+      },
+      {
+        "id": "document_review",
+        "label": "文档审查",
+        "path": "./skills/document_review/SKILL.md",
+        "users": ["legal", "qa"],
+        "description": "文档审查与合规检查"
+      },
+      {
+        "id": "task_tracking",
+        "label": "任务追踪",
+        "path": "./skills/task_tracking/SKILL.md",
+        "users": ["ceo", "coo", "qa"],
+        "description": "任务状态同步和追踪"
+      },
+      {
+        "id": "tech_architecture",
+        "label": "技术架构",
+        "path": "./skills/tech_architecture/SKILL.md",
+        "users": ["cto"],
+        "description": "技术架构设计与选型"
+      },
+      {
+        "id": "code_review",
+        "label": "代码审查",
+        "path": "./skills/code_review/SKILL.md",
+        "users": ["cto", "engineering"],
+        "description": "代码审查与技术评审"
+      },
+      {
+        "id": "tech_decision",
+        "label": "技术决策",
+        "path": "./skills/tech_decision/SKILL.md",
+        "users": ["cto"],
+        "description": "技术选型与决策评估"
+      },
+      {
+        "id": "coding",
+        "label": "代码开发",
+        "path": "./skills/coding/SKILL.md",
+        "users": ["engineering"],
+        "description": "代码编写与实现"
+      },
+      {
+        "id": "debugging",
+        "label": "调试排查",
+        "path": "./skills/debugging/SKILL.md",
+        "users": ["engineering"],
+        "description": "问题调试与排查"
+      },
+      {
+        "id": "refactoring",
+        "label": "代码重构",
+        "path": "./skills/refactoring/SKILL.md",
+        "users": ["engineering"],
+        "description": "代码重构与优化"
+      },
+      {
+        "id": "deployment",
+        "label": "部署发布",
+        "path": "./skills/deployment/SKILL.md",
+        "users": ["engineering", "cto"],
+        "description": "部署与发布管理"
+      },
+      {
+        "id": "unit_testing",
+        "label": "单元测试",
+        "path": "./skills/unit_testing/SKILL.md",
+        "users": ["qa", "engineering"],
+        "description": "单元测试编写与执行"
+      },
+      {
+        "id": "integration_testing",
+        "label": "集成测试",
+        "path": "./skills/integration_testing/SKILL.md",
+        "users": ["qa"],
+        "description": "集成测试与系统测试"
+      },
+      {
+        "id": "bug_tracking",
+        "label": "缺陷追踪",
+        "path": "./skills/bug_tracking/SKILL.md",
+        "users": ["qa", "engineering"],
+        "description": "缺陷管理与追踪"
+      },
+      {
+        "id": "status_report",
+        "label": "状态报告",
+        "path": "./skills/status_report/SKILL.md",
+        "users": ["all"],
+        "description": "进度状态报告"
+      },
+      {
+        "id": "blocker_escalation",
+        "label": "阻塞上报",
+        "path": "./skills/blocker_escalation/SKILL.md",
+        "users": ["all"],
+        "description": "阻塞问题上报与协调"
+      },
+      {
+        "id": "handoff",
+        "label": "工作交接",
+        "path": "./skills/handoff/SKILL.md",
+        "users": ["all"],
+        "description": "部门间工作交接"
+      },
+      {
+        "id": "collaboration",
+        "label": "跨部门协作",
+        "path": "./skills/collaboration/SKILL.md",
+        "users": ["coo", "all"],
+        "description": "跨部门协作协议"
+      }
+    ]
+  },
+  "agents": {
+    "skillMapping": {
+      "ceo": ["task_assignment", "strategy_meeting", "task_tracking", "status_report", "blocker_escalation"],
+      "coo": ["task_assignment", "task_tracking", "strategy_meeting", "collaboration", "handoff", "status_report"],
+      "cto": ["tech_architecture", "code_review", "tech_decision", "deployment", "status_report"],
+      "cfo": ["budget_planning", "document_review", "status_report"],
+      "finance": ["budget_planning", "document_review", "status_report"],
+      "hr": ["document_review", "status_report"],
+      "legal": ["document_review", "status_report"],
+      "marketing": ["document_review", "status_report"],
+      "sales": ["document_review", "status_report"],
+      "engineering": ["coding", "debugging", "refactoring", "deployment", "code_review", "unit_testing", "status_report"],
+      "design": ["document_review", "quality_check", "status_report"],
+      "qa": ["quality_check", "document_review", "task_tracking", "unit_testing", "integration_testing", "bug_tracking", "status_report"]
+    }
+  }
+}

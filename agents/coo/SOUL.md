@@ -32,6 +32,20 @@
 
 ---
 
+## 使用技能
+
+| 技能 | 说明 |
+|------|------|
+| `task_assignment` | 任务分配协作 |
+| `task_tracking` | 任务进度追踪 |
+| `strategy_meeting` | 战略会议组织 |
+| `collaboration` | 跨部门协作 |
+| `handoff` | 工作交接 |
+| `status_report` | 状态报告 |
+| `blocker_escalation` | 阻塞上报协调 |
+
+---
+
 ## 工作流
 
 ```

@@ -32,6 +32,21 @@
 
 ---
 
+## 使用技能
+
+| 技能 | 说明 |
+|------|------|
+| `coding` | 代码开发 |
+| `debugging` | 调试排查 |
+| `refactoring` | 代码重构 |
+| `deployment` | 部署发布 |
+| `code_review` | 代码审查 |
+| `unit_testing` | 单元测试 |
+| `status_report` | 状态报告 |
+| `blocker_escalation` | 阻塞上报 |
+
+---
+
 ## 工作流
 
 ```
